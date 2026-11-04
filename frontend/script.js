@@ -1913,13 +1913,21 @@ function normalizePool(p) {
 }
 
 function api(path, options = {}) {
+    const configuredBase = window.NURO_API_BASE
+        ? String(window.NURO_API_BASE).replace(/\/+$/, '')
+        : '';
     const origin = (window.location.origin && window.location.origin !== 'null')
         ? window.location.origin
         : 'http://localhost:5000';
-    // Try the page's own origin first (normal setup: Express serves the site),
-    // then fall back to the default backend port for Live Server / file:// setups.
-    const bases = ['http://localhost:5000'];
-    if (origin !== 'http://localhost:5000') bases.unshift(origin);
+    // Use the configured backend when one is set (Vercel + Render). Otherwise
+    // try the page's own origin first, then the local backend port.
+    const bases = [];
+    if (configuredBase) {
+        bases.push(configuredBase);
+    } else {
+        bases.push('http://localhost:5000');
+        if (origin !== 'http://localhost:5000') bases.unshift(origin);
+    }
 
     const TIMEOUT_MS = options.timeout || 12000;
     const RETRIES = options.retries != null ? options.retries : 1;

@@ -99,7 +99,9 @@ app.use('/api/ai-assistant', aiLimiter);
 const SESSION_COOKIE_OPTS = {
   httpOnly: true,
   secure: IS_PROD,
-  sameSite: 'lax',
+  // The Vercel frontend and Render backend are different sites in production,
+  // so auth cookies must be sent cross-site. Local dev stays lax.
+  sameSite: IS_PROD ? 'none' : 'lax',
   maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
 };
 

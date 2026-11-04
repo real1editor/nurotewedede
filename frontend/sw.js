@@ -1,9 +1,10 @@
 // NuroTewedede Service Worker - simple app-shell cache for offline use.
 // Bump CACHE below (and re-register) whenever app shell assets change to avoid stale caches.
-const CACHE = 'nurotewedede-v4';
+const CACHE = 'nurotewedede-v5';
 const ASSETS = [
   './',
   './index.html',
+  './config.js',
   './tailwind.css',
   './style.css',
   './script.js',

@@ -1,0 +1,17 @@
+{
+  "name": "nurotewedede",
+  "version": "1.0.0",
+  "private": true,
+  "description": "NuroTewedede - neighborhood group-buying platform",
+  "scripts": {
+    "start": "node backend/index.js",
+    "dev": "node backend/index.js",
+    "build:css": "tailwindcss -i frontend/tailwind-input.css -o frontend/tailwind.css --minify",
+    "test": "node scripts/smoke-test.mjs",
+    "audit": "node scripts/data-audit.mjs"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "tailwindcss": "^4.3.3"
+  }
+}

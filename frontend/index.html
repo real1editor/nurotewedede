@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NuroTewedede — Ethiopian Neighborhood Group Buying</title>
+    <meta name="description" content="Ethiopian neighborhood group buying platform: lock wholesale prices with your neighbors, reserve shares and track pickup vouchers.">
+    <link rel="canonical" href="https://nurotewedede.example/">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="NuroTewedede">
+    <meta property="og:title" content="NuroTewedede — Ethiopian Neighborhood Group Buying">
+    <meta property="og:description" content="Lock wholesale prices with your neighbors. Farmers sell direct — 0% broker markups.">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/jpeg" href="logo.jpeg">
+    <meta name="theme-color" content="#047857">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:;">
+    <link rel="apple-touch-icon" href="logo.jpeg">
+    <!-- Precompiled Tailwind CSS (built via `npm run build:css`; no runtime CDN dependency) -->
+    <link rel="stylesheet" href="tailwind.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans min-h-screen flex flex-col antialiased">
+
+    <noscript>
+        <div style="background:#7f1d1d;color:#fff;padding:14px 20px;text-align:center;font-family:sans-serif;font-size:14px;">
+            NuroTewedede needs JavaScript to run. Please enable JavaScript in your browser settings and reload the page.
+        </div>
+    </noscript>
+
+    <!-- Offline indicator banner -->
+    <div id="offline-banner" class="hidden fixed top-0 left-0 right-0 z-50 bg-amber-500 text-white text-center py-2 px-4 text-sm font-bold shadow-lg">
+        <span class="flex items-center justify-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3m8.293 8.293l-1.414 1.414"/></svg>
+            <span data-i18n="offline.title">You're currently offline</span>
+            <span class="text-amber-100 font-normal" data-i18n="offline.message">— Showing cached data where available.</span>
+        </span>
+    </div>
+
+    <!-- Skip link: first tab stop for keyboard users -->
+    <a href="#main-content" class="skip-link" data-i18n="aria.skipToContent">Skip to main content</a>
+
+    <!-- Scroll Progress Bar -->
+    <div id="scroll-progress" aria-hidden="true"></div>
+
+    <!-- Header Navigation -->
+    <header id="site-header" class="glass-header text-white sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center gap-2">
+            <div class="flex items-center gap-3">
+                <div class="bg-white/10 p-1 rounded-lg shrink-0">
+                    <img src="logo.jpeg" alt="NuroTewedede logo" class="h-10 rounded-md">
+                </div>
+                <button onclick="goHome()" class="text-left group focus:outline-none">
+                    <h1 class="text-xl font-bold tracking-tight leading-tight">NuroTewedede</h1>
+                    <p class="text-[9px] text-emerald-100/75 leading-tight ethiopic" dir="auto">
+                        <span data-i18n="brand.quote"></span> <span class="text-emerald-200/55" data-i18n="brand.quoteAuthor"></span>
+                    </p>
+                </button>
+            </div>
+
+            <button id="mobile-menu-toggle" class="md:hidden relative w-10 h-10 rounded-lg hover:bg-white/10 transition" data-i18n-aria-label="aria.toggleMenu" aria-label="Toggle menu" aria-expanded="false">
+                <svg id="icon-hamburger" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+                <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+
+            <!-- Desktop Navigation: core links inline -->
+            <nav id="desktop-nav" class="hidden md:flex items-center gap-1">
+                <button class="nav-link tab-btn px-3 py-2 text-sm font-semibold rounded-xl transition whitespace-nowrap" data-tab="pools" data-i18n="nav.pools">Active Pools</button>
+                <button class="nav-link tab-btn px-3 py-2 text-sm font-semibold rounded-xl transition whitespace-nowrap hidden" data-tab="seller" data-i18n="nav.sellerDashboard">Seller Dashboard</button>
+                <button class="nav-link tab-btn px-3 py-2 text-sm font-semibold rounded-xl transition whitespace-nowrap" data-tab="calculator" data-i18n="nav.calculator">Savings Calculator</button>
+                <button class="nav-link tab-btn px-3 py-2 text-sm font-semibold rounded-xl transition whitespace-nowrap" data-tab="hubs" data-i18n="nav.hubs">Hub Map</button>
+            </nav>
+
+            <div class="flex items-center gap-2">
+                <button id="theme-toggle" onclick="toggleTheme()" class="p-2 rounded-lg hover:bg-white/10 transition" data-i18n-aria-label="aria.toggleTheme" aria-label="Toggle dark mode">
+                    <svg id="theme-icon-sun" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                    </svg>
+                    <svg id="theme-icon-moon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/>
+                    </svg>
+                </button>
+
+                <!-- Language Selector Dropdown -->
+                <div id="lang-dropdown" class="relative hidden sm:block">
+                    <button id="lang-dropdown-btn" onclick="toggleLangDropdown(event)" class="flex items-center gap-1.5 bg-emerald-900/60 border border-emerald-600/60 rounded-xl px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-800 transition" aria-haspopup="listbox" aria-expanded="false" data-i18n-aria-label="aria.selectLang" aria-label="Select language">
+                        <span id="lang-current-label">English</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-emerald-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="lang-dropdown-menu" class="hidden absolute right-0 mt-2 w-44 glass-card rounded-xl shadow-xl py-1.5 z-50" role="listbox">
+                        <button class="lang-option w-full flex items-center gap-2 px-3 py-2 text-left text-xs font-bold text-slate-700 hover:bg-emerald-50 transition" data-lang="en" onclick="setLang('en')" role="option" aria-label="English">🇬🇧 English</button>
+                        <button class="lang-option w-full flex items-center gap-2 px-3 py-2 text-left text-xs font-bold text-slate-700 hover:bg-emerald-50 transition" data-lang="am" onclick="setLang('am')" role="option" aria-label="አማርኛ">🇪🇹 አማርኛ</button>
+                        <button class="lang-option w-full flex items-center gap-2 px-3 py-2 text-left text-xs font-bold text-slate-700 hover:bg-emerald-50 transition" data-lang="om" onclick="setLang('om')" role="option" aria-label="Afaan Oromoo">🇪🇹 Afaan Oromoo</button>
+                    </div>
+                </div>
+
+                <button id="open-auth-btn" onclick="openAuthModal()" class="bg-emerald-800 border border-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg font-semibold text-sm transition shadow" data-i18n="nav.signin">
+                    Sign In
+                </button>
+                <div id="user-menu" class="hidden items-center gap-3">
+                    <div class="relative">
+                        <button id="user-menu-btn" class="bg-emerald-900/60 border border-emerald-600/60 px-3 py-1.5 rounded-lg font-semibold text-sm transition flex items-center gap-1.5">
+                            <span id="user-email" class="text-sm font-semibold max-w-[90px] truncate"></span>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-52 bg-slate-900 border border-slate-700 rounded-xl shadow-xl py-2 z-50">
+                            <button id="user-seller-link" onclick="showTab('seller')" class="hidden w-full text-left px-3 py-2 text-xs text-emerald-300 hover:bg-slate-800 transition" data-i18n="nav.sellerDashboard">Seller Dashboard</button>
+                            <button onclick="showTab('myshares')" data-nav="buyer" class="w-full text-left px-3 py-2 text-xs text-slate-200 hover:bg-slate-800 transition" data-i18n="nav.myshares">My Reserved Shares</button>
+                            <button onclick="handleLogout()" class="w-full text-left px-3 py-2 text-xs text-rose-400 hover:bg-slate-800 transition" data-i18n="nav.signout">Sign Out</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-emerald-800 border-t border-emerald-600">
+            <div class="px-4 py-3 space-y-1">
+                <button class="menu-item mobile-tab-btn w-full text-left px-3 py-2.5 text-sm font-medium rounded-lg transition" data-menu="home" data-i18n="nav.home">Home</button>
+                <button class="menu-item mobile-tab-btn w-full text-left px-3 py-2.5 text-sm font-medium rounded-lg transition" data-menu="service" data-i18n="nav.service">Service</button>
+                <button class="menu-item mobile-tab-btn w-full text-left px-3 py-2.5 text-sm font-medium rounded-lg transition" data-menu="about" data-i18n="nav.about">About Us</button>
+                <button class="menu-item mobile-tab-btn w-full text-left px-3 py-2.5 text-sm font-medium rounded-lg transition" data-menu="how" data-i18n="nav.how">How it works</button>
+                <button class="mobile-tab-btn w-full text-left px-3 py-2.5 text-sm font-medium rounded-lg transition" data-tab="pools" data-i18n="nav.pools">Active Pools</button>
+                <button class="mobile-tab-btn w-full text-left px-3 py-2.5 text-sm font-medium rounded-lg transition" data-tab="calculator" data-i18n="nav.calculator">Savings Calculator</button>
+                <button class="mobile-tab-btn w-full text-left px-3 py-2.5 text-sm font-medium rounded-lg transition" data-tab="hubs" data-i18n="nav.hubs">Hub Map</button>
+                <button class="mobile-tab-btn w-full text-left px-3 py-2.5 text-sm font-medium rounded-lg transition" data-tab="myshares" data-i18n="nav.myshares">My Reserved Shares</button>
+                <button class="mobile-tab-btn w-full text-left px-3 py-2.5 text-sm font-medium rounded-lg transition hidden" data-tab="seller" data-i18n="nav.sellerDashboard">Seller Dashboard</button>
+                <button onclick="openBulkModal()" data-nav="buyer" class="w-full text-left px-3 py-2.5 text-sm font-medium rounded-lg transition text-emerald-200 hidden" data-i18n="nav.bulk">Bulk &amp; Institutional</button>
+            </div>
+            <div class="px-4 py-3 border-t border-emerald-700/60 flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center bg-emerald-900/60 border border-emerald-700 rounded-xl p-0.5 text-xs font-bold w-full sm:w-auto justify-center">
+                    <button class="lang-btn px-3 py-2 rounded-lg transition flex-1" data-lang="en" onclick="setLang('en')">EN</button>
+                    <button class="lang-btn px-3 py-2 rounded-lg transition flex-1" data-lang="am" onclick="setLang('am')">አም</button>
+                    <button class="lang-btn px-3 py-2 rounded-lg transition flex-1" data-lang="om" onclick="setLang('om')">ኦሞ</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main id="main-content" tabindex="-1" class="max-w-7xl mx-auto px-4 py-8 flex-grow w-full">
+
+        <!-- ==================== VIEW: ROLE GATE (root entry / auth gate) ==================== -->
+        <section id="view-gate" class="view-section hidden space-y-8">
+            <div class="glass-card rounded-3xl shadow-sm overflow-hidden">
+                <div class="relative bg-gradient-to-br from-emerald-900 via-emerald-700 to-teal-600 px-6 py-12 md:py-16 text-center text-white overflow-hidden">
+                    <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 22px 22px;"></div>
+                    <div class="relative z-10 max-w-2xl mx-auto space-y-4">
+                        <span class="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-[11px] font-black uppercase tracking-wider px-4 py-1.5 rounded-full" data-i18n="gate.badge">NuroTewedede Marketplace</span>
+                        <h1 class="text-3xl md:text-4xl font-black tracking-tight" data-i18n="gate.title">Join the Direct Sourcing Marketplace</h1>
+                        <p class="text-sm md:text-base text-emerald-100 leading-relaxed" data-i18n="gate.subtitle">Choose how you want to participate — group-buying as a neighborhood or listing your harvest directly to buyers across Ethiopia.</p>
+                        <div class="flex flex-wrap justify-center gap-2 pt-1">
+                            <span class="bg-black/20 border border-white/10 text-[11px] font-bold px-3 py-1 rounded-full">🤝 <span data-i18n="gate.chipBuy">Group Buying</span></span>
+                            <span class="bg-black/20 border border-white/10 text-[11px] font-bold px-3 py-1 rounded-full">🌾 <span data-i18n="gate.chipSell">Farmer Supply</span></span>
+                            <span class="bg-black/20 border border-white/10 text-[11px] font-bold px-3 py-1 rounded-full">🚚 <span data-i18n="gate.chipHub">Neighborhood Hubs</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6 md:p-10">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-4xl mx-auto">
+                        <!-- Buyer Card -->
+                        <button type="button" onclick="chooseRole('buyer')" class="group text-left glass-card border-2 border-slate-200 rounded-2xl p-6 transition hover:border-emerald-600 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-2xl">🛒</span>
+                                <span class="bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full" data-i18n="gate.popular">Most Popular</span>
+                            </div>
+                            <h2 class="text-lg font-black text-slate-900" data-i18n="gate.buyerTitle">I am a Buyer</h2>
+                            <p class="text-xs text-slate-500 leading-relaxed mt-1" data-i18n="gate.buyerText">Join neighborhood group-buying pools, lock wholesale prices and reserve shares from your local hub.</p>
+                            <ul class="mt-4 space-y-2 text-xs text-slate-600">
+                                <li class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> <span data-i18n="gate.buyerFeat1">+ Launch a Pool</span></li>
+                                <li class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> <span data-i18n="gate.buyerFeat2">Crop filters &amp; town hubs</span></li>
+                                <li class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> <span data-i18n="gate.buyerFeat3">Up to 35% wholesale savings</span></li>
+                            </ul>
+                            <div class="mt-5 flex items-center gap-2 text-sm font-bold text-emerald-800 group-hover:text-emerald-700">
+                                <span data-i18n="gate.cta">Continue</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                            </div>
+                        </button>
+
+                        <!-- Seller Card -->
+                        <button type="button" onclick="chooseRole('seller')" class="group text-left glass-card border-2 border-slate-200 rounded-2xl p-6 transition hover:border-amber-600 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center text-2xl">🌾</span>
+                                <span class="bg-amber-50 text-amber-700 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full" data-i18n="gate.farmers">For Farmers &amp; Co-ops</span>
+                            </div>
+                            <h2 class="text-lg font-black text-slate-900" data-i18n="gate.sellerTitle">I am a Seller</h2>
+                            <p class="text-xs text-slate-500 leading-relaxed mt-1" data-i18n="gate.sellerText">List your harvest with quality grades, volume and pricing — reaching buyers across Ethiopia directly.</p>
+                            <ul class="mt-4 space-y-2 text-xs text-slate-600">
+                                <li class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> <span data-i18n="gate.sellerFeat1">+ List Your Harvest</span></li>
+                                <li class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> <span data-i18n="gate.sellerFeat2">Quality &amp; volume specs</span></li>
+                                <li class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> <span data-i18n="gate.sellerFeat3">Manage supply inventory</span></li>
+                            </ul>
+                            <div class="mt-5 flex items-center gap-2 text-sm font-bold text-amber-800 group-hover:text-amber-700">
+                                <span data-i18n="gate.cta">Continue</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="mt-8 text-center">
+                        <p class="text-xs text-slate-400" data-i18n="gate.footNote">Already have an account? Sign in to go straight to your portal.</p>
+                        <div class="mt-3 flex justify-center">
+                            <button type="button" onclick="openAuthModal()" class="text-xs font-bold text-emerald-800 hover:text-emerald-600 underline underline-offset-4 transition" data-i18n="auth.signin">Sign In</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Live Wholesale Price Ticker (populated by JS from pool data) -->
+        <section id="ticker" class="glass-card text-emerald-300 rounded-xl px-3 py-2.5 overflow-hidden mb-6 shadow-sm" data-i18n-aria-label="aria.ticker" aria-label="Live wholesale price ticker" data-reveal="up">
+            <div class="flex items-center gap-3">
+                <span class="shrink-0 live-badge">
+                    <span data-i18n="ticker.label">Live Prices</span>
+                </span>
+                <div class="ticker-viewport flex-1 overflow-hidden">
+                    <div id="ticker-track" class="ticker-track flex items-center whitespace-nowrap"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== VIEW: POOLS ==================== -->
+        <section id="view-pools" class="view-section hidden space-y-8">
+
+            <!-- Hero Section -->
+            <section id="home" class="hero-glow relative isolate overflow-hidden bg-gradient-to-r from-emerald-800 to-teal-700 rounded-2xl p-6 md:p-8 text-white shadow-lg" data-reveal="zoom">
+                <h2 id="hero-title" class="text-3xl font-extrabold mb-2" data-i18n="hero.title">Combat Food Inflation Together</h2>
+                <p class="text-emerald-100 max-w-2xl text-sm md:text-base" data-i18n="hero.subtitle">
+                    Connecting regional farming production directly to neighborhood distribution hubs in Ethiopia to secure bulk wholesale prices for local communities.
+                </p>
+
+                <!-- Bulk CTA -->
+                <div class="mt-6 flex flex-wrap items-center gap-3">
+                    <button onclick="openBulkModal()" data-nav="buyer" class="bg-amber-400 hover:bg-amber-300 text-emerald-950 px-4 py-2 rounded-xl font-bold text-sm shadow-md transition" data-i18n="bulk.cta">
+                        🏭 Bulk &amp; Institutional Orders
+                    </button>
+                    <span class="text-[11px] text-emerald-100/90 font-medium" data-i18n="hero.bulkHint">Cafés, schools, hotels &amp; co-ops — 100+ kg monthly</span>
+                </div>
+
+                <!-- Decorative floating shapes -->
+                <div class="hero-float hero-float-1 -z-10" aria-hidden="true"></div>
+                <div class="hero-float hero-float-2 -z-10" aria-hidden="true"></div>
+                <div class="hero-float hero-float-3 -z-10" aria-hidden="true"></div>
+            </section>
+
+            <!-- Live Impact & Inflation Fighter Metrics Bar (bento grid) -->
+            <section class="glass-panel rounded-2xl p-4 md:p-6 shadow-sm" data-reveal="up">
+                <div class="bento bento-metrics">
+                    <div class="bento-tile">
+                        <div class="bento-icon bento-icon-emerald">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 font-medium uppercase tracking-wider" data-i18n="metric.savings">Avg Retail Savings</p>
+                            <p id="metric-savings" class="text-xl font-extrabold text-slate-800">--%</p>
+                        </div>
+                    </div>
+                    <div class="bento-tile">
+                        <div class="bento-icon bento-icon-teal">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243A8 8 0 1117.657 16.657z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 font-medium uppercase tracking-wider" data-i18n="metric.woredas">Connected Woredas</p>
+                            <p id="metric-woredas" class="text-xl font-extrabold text-slate-800">--</p>
+                        </div>
+                    </div>
+                    <div class="bento-tile">
+                        <div class="bento-icon bento-icon-indigo">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 font-medium uppercase tracking-wider" data-i18n="metric.pools">Active Pools</p>
+                            <p id="metric-pools" class="text-xl font-extrabold text-slate-800">--</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pool Cards Section Grid -->
+            <section class="glass-panel rounded-2xl p-4 md:p-6 shadow-sm" data-reveal="up">
+                <div class="mb-4 flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-slate-800" data-i18n="pools.title">Active Group Pools</h3>
+                    <span id="pool-count" class="text-xs text-slate-500 font-medium" data-i18n="pools.showing">Showing all pools</span>
+                </div>
+                <div class="glass-card rounded-2xl p-3 md:p-4 mb-6 shadow-sm">
+                    <div class="flex flex-col md:flex-row gap-3 items-center justify-between">
+                        <div class="relative w-full md:w-96">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            </span>
+                            <input type="text" id="search-input" placeholder="Search produce, category or woreda..." data-i18n-placeholder="pools.search" class="w-full border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                        </div>
+                        <div class="flex items-center gap-2 w-full md:w-auto">
+                            <label for="sort-select" class="text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap" data-i18n="pools.sortBy">Sort By:</label>
+                            <select id="sort-select" class="sort-select border border-emerald-600/60 bg-emerald-900/60 text-white text-xs font-bold rounded-xl pl-3 pr-8 py-1.5 focus:ring-2 focus:ring-emerald-500 outline-none w-full md:w-auto cursor-pointer">
+                                <option value="default" data-i18n="pools.sortDefault">Default</option>
+                                <option value="savings" data-i18n="pools.sortSavings">Highest Savings %</option>
+                                <option value="price-asc" data-i18n="pools.sortPriceAsc">Price: Low to High</option>
+                                <option value="price-desc" data-i18n="pools.sortPriceDesc">Price: High to Low</option>
+                                <option value="progress" data-i18n="pools.sortProgress">Funding Progress</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="search-status" class="hidden mt-2 text-xs text-slate-500 font-medium" role="status" aria-live="polite"></div>
+                </div>
+
+                <!-- Action Toolbar: Town Filter + Produce Type + Launch CTA (moved from global navbar) -->
+                <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <div id="town-dropdown" class="relative">
+                            <button id="town-dropdown-btn" onclick="toggleTownDropdown('town-dropdown', event)" class="flex items-center gap-1.5 bg-emerald-900/60 border border-emerald-600/60 rounded-xl px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-800 transition" aria-haspopup="listbox" aria-expanded="false" aria-controls="town-dropdown-menu">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-emerald-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                <span id="town-current-label" data-i18n="pools.allTowns">All Towns / Hubs</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-emerald-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            <div id="town-dropdown-menu" class="hidden absolute left-0 mt-2 w-64 glass-card rounded-xl shadow-xl py-1.5 z-50 max-h-80 overflow-y-auto scrollbar-thin" role="listbox"></div>
+                        </div>
+                        <div id="produce-dropdown" class="relative">
+                            <button id="produce-dropdown-btn" onclick="toggleProduceDropdown(event)" class="flex items-center gap-1.5 bg-emerald-900/60 border border-emerald-600/60 rounded-xl px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-800 transition" aria-haspopup="listbox" aria-expanded="false" aria-controls="produce-dropdown-menu">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-emerald-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2 3 5 4 5 9a5 5 0 01-10 0c0-5 3-6 5-9z"/></svg>
+                                <span id="produce-current-label" data-i18n="pools.allProducts">All Products</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-emerald-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            <div id="produce-dropdown-menu" class="hidden absolute left-0 mt-2 w-72 sm:w-80 glass-card rounded-xl shadow-xl py-1.5 z-50 max-h-[26rem] overflow-y-auto overscroll-contain scrollbar-thin" role="listbox"></div>
+                        </div>
+                    </div>
+                    <button onclick="handleLaunchPool()" class="bg-emerald-800 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-bold text-sm transition shadow whitespace-nowrap" data-i18n="nav.launch">
+                        + Launch a Pool
+                    </button>
+                </div>
+
+                <div id="pools-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <!-- Dynamic Cards Populated via JavaScript -->
+                </div>
+            </section>
+
+            <!-- What We Do Section -->
+            <section id="service" class="py-12 md:py-16 bg-slate-50">
+                <div>
+                    <div class="text-center mb-10">
+                        <span class="inline-block bg-emerald-100 text-emerald-800 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-3" data-i18n="service.badge">What We Do</span>
+                        <h2 class="text-2xl md:text-3xl font-extrabold text-slate-800 mb-3" data-i18n="service.title">We're passionate about bringing communities together through group buying</h2>
+                        <p class="text-slate-500 max-w-2xl mx-auto text-sm md:text-base" data-i18n="service.subtitle">NuroTewedede empowers neighborhoods across Ethiopia to access affordable produce, support local farmers, and build resilient food systems through collective purchasing power.</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="service-card glass-card p-6 shadow-sm hover:shadow-md transition" data-reveal="up">
+                            <div class="icon-chip bg-emerald-100 text-emerald-800 w-12 h-12 rounded-xl flex items-center justify-center mb-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-800 mb-2" data-i18n="service.card1Title">Combat Food Inflation</h3>
+                            <p class="text-sm text-slate-600 leading-relaxed" data-i18n="service.card1Text">Pool orders together to unlock wholesale pricing directly from regional farming woredas and beat retail price hikes.</p>
+                        </div>
+                        <div class="service-card glass-card p-6 shadow-sm hover:shadow-md transition" data-reveal="up">
+                            <div class="icon-chip bg-teal-100 text-teal-800 w-12 h-12 rounded-xl flex items-center justify-center mb-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-800 mb-2" data-i18n="service.card2Title">Support Ethiopian Farmers</h3>
+                            <p class="text-sm text-slate-600 leading-relaxed" data-i18n="service.card2Text">Directly connect urban neighborhood distribution hubs to local agricultural producers for fair trade.</p>
+                        </div>
+                        <div class="service-card glass-card p-6 shadow-sm hover:shadow-md transition" data-reveal="up">
+                            <div class="icon-chip bg-indigo-100 text-indigo-800 w-12 h-12 rounded-xl flex items-center justify-center mb-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-800 mb-2" data-i18n="service.card3Title">Seamless Group Logistics</h3>
+                            <p class="text-sm text-slate-600 leading-relaxed" data-i18n="service.card3Text">Easily join active community buying pools or launch your own distribution hub in seconds.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- About NuroTewedede Section -->
+            <section id="about" class="glass-card rounded-2xl p-6 md:p-10 shadow-sm">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                    <div class="flex justify-center" data-reveal="left">
+                        <div class="relative w-full max-w-xs">
+                            <div class="bg-slate-900 rounded-[2.5rem] pb-6 shadow-2xl transform">
+                                <div class="bg-slate-800 rounded-[2rem] mx-auto w-[90%] mt-4 h-96 flex flex-col">
+                                    <div class="bg-slate-950 h-12 rounded-t-[1.75rem] flex items-center px-4 gap-2">
+                                        <div class="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                                        <div class="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                                        <div class="flex-1 h-1.5 bg-slate-700 rounded-full"></div>
+                                    </div>
+                                    <div class="flex-1 px-4 py-3 space-y-3 overflow-y-auto">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 bg-emerald-600 rounded-lg flex-shrink-0 flex items-center justify-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            </div>
+                                            <div class="flex-1">
+                                                <p class="text-white font-semibold text-xs" data-i18n="about.mockTeff">Teff (White Gojjam)</p>
+                                                <p class="text-slate-400 text-[10px]" data-i18n="about.mockGojjam">Gojjam Woreda</p>
+                                            </div>
+                                            <div class="bg-amber-500 text-[10px] font-bold px-1.5 py-0.5 rounded">50%</div>
+                                        </div>
+                                        <div class="bg-slate-800 h-14 rounded-lg flex items-center gap-3 px-3">
+                                            <div class="w-8 h-8 bg-emerald-700 rounded"></div>
+                                            <div class="flex-1">
+                                                <p class="text-white font-semibold text-xs" data-i18n="about.mockOnion">Red Onion - 25kg</p>
+                                                <div class="w-full bg-slate-700 h-1.5 rounded-full mt-1"><div class="bg-emerald-600 h-full w-3/4 rounded-full"></div></div>
+                                            </div>
+                                        </div>
+                                        <div class="bg-slate-800 h-14 rounded-lg flex items-center gap-3 px-3">
+                                            <div class="w-8 h-8 bg-teal-700 rounded"></div>
+                                            <div class="flex-1">
+                                                <p class="text-white font-semibold text-xs" data-i18n="about.mockCoffee">Sidamo Coffee - 10kg</p>
+                                                <div class="w-full bg-slate-700 h-1.5 rounded-full mt-1"><div class="bg-emerald-600 h-full w-1/2 rounded-full"></div></div>
+                                            </div>
+                                        </div>
+                                        <div class="bg-slate-800 h-14 rounded-lg flex items-center gap-3 px-3">
+                                            <div class="w-8 h-8 bg-indigo-700 rounded"></div>
+                                            <div class="flex-1">
+                                                <p class="text-white font-semibold text-xs" data-i18n="about.mockBarley">Barley Bulk - 40kg</p>
+                                                <div class="w-full bg-slate-700 h-1.5 rounded-full mt-1"><div class="bg-amber-500 h-full w-full rounded-full"></div></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-emerald-600 text-white px-3 py-1.5 rounded-full shadow-lg text-xs font-semibold" data-i18n="about.mockBadge">
+                                Regional Produce
+                            </div>
+                        </div>
+                    </div>
+                    <div data-reveal="right">
+                        <span class="inline-block bg-emerald-100 text-emerald-800 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-3" data-i18n="about.badge">About NuroTewedede</span>
+                        <h2 class="text-2xl md:text-3xl font-extrabold text-slate-800 mb-4" data-i18n="about.title">NuroTewedede: A lifeline for farmers, a game-changer for buyers.</h2>
+                        <p class="text-slate-600 text-sm md:text-base leading-relaxed mb-4" data-i18n="about.text">
+                            Built on the power of social commerce, NuroTewedede bridges regional farming woredas and urban neighborhoods to transform access to essential goods. We cut out exploitative middlemen, channeling wholesale pricing directly from producers to communities. For farmers, this means fair compensation and expanded market reach across Ethiopia's major hubs. For buyers, it means up to 35% savings on everyday staples while supporting the livelihoods of local producers. Together, we're building a more equitable and resilient food ecosystem.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- How It Works Section -->
+            <section id="how-it-works" class="py-12 md:py-16 bg-slate-50">
+                <div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+                        <div data-reveal="left">
+                            <span class="inline-block bg-emerald-100 text-emerald-800 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-3" data-i18n="how.badge">How it works</span>
+                            <h2 class="text-2xl md:text-3xl font-extrabold text-slate-800 mb-6" data-i18n="how.title">Add to your cart, leave the rest to us</h2>
+                            <div class="space-y-5">
+                                <div class="flex gap-4">
+                                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-700 text-white flex items-center justify-center text-sm font-bold">1</div>
+                                    <div>
+                                        <h3 class="text-base font-bold text-slate-800 mb-1" data-i18n="how.step1Title">Create a group or pool</h3>
+                                        <p class="text-sm text-slate-600 leading-relaxed" data-i18n="how.step1Text">Create a group or pool on NuroTewedede to unlock wholesale fair pricing.</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-4">
+                                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-700 text-white flex items-center justify-center text-sm font-bold">2</div>
+                                    <div>
+                                        <h3 class="text-base font-bold text-slate-800 mb-1" data-i18n="how.step2Title">Invite your community</h3>
+                                        <p class="text-sm text-slate-600 leading-relaxed mb-2" data-i18n="how.step2Text">Invite neighbors, friends, or family by sharing the product link.</p>
+                                        <div class="bg-slate-900 text-emerald-400 font-mono text-sm px-4 py-2 rounded-lg inline-flex items-center gap-2">
+                                            <span data-i18n="how.timeLeft">Time left:</span>
+                                            <span id="countdown-timer">00 : 20 : 56 : 40</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex gap-4">
+                                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-700 text-white flex items-center justify-center text-sm font-bold">3</div>
+                                    <div>
+                                        <h3 class="text-base font-bold text-slate-800 mb-1" data-i18n="how.step3Title">Lock and save</h3>
+                                        <p class="text-sm text-slate-600 leading-relaxed" data-i18n="how.step3Text">Once the group reaches the required participant threshold, the bulk order from the regional woredas is locked and placed at a deep discount.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex justify-center" data-reveal="right">
+                            <div class="relative w-full glass-card rounded-3xl p-6 shadow-sm">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="how-stat bg-emerald-50 rounded-2xl p-4 flex flex-col items-center text-center gap-2" data-reveal="up">
+                                        <div class="w-10 h-10 bg-emerald-100 text-emerald-800 rounded-xl flex items-center justify-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        </div>
+                                        <p class="text-xs font-bold text-slate-800" data-i18n="how.statSourcing">Agricultural Sourcing</p>
+                                        <p class="text-[10px] text-slate-500" data-i18n="how.statSourcingSub">Direct from regional woredas</p>
+                                    </div>
+                                    <div class="how-stat bg-teal-50 rounded-2xl p-4 flex flex-col items-center text-center gap-2" data-reveal="up">
+                                        <div class="w-10 h-10 bg-teal-100 text-teal-800 rounded-xl flex items-center justify-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243A8 8 0 1117.657 16.657z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                        </div>
+                                        <p class="text-xs font-bold text-slate-800" data-i18n="how.statLogistics">Local Logistics</p>
+                                        <p class="text-[10px] text-slate-500" data-i18n="how.statLogisticsSub">Community hub delivery</p>
+                                    </div>
+                                    <div class="how-stat bg-indigo-50 rounded-2xl p-4 flex flex-col items-center text-center gap-2" data-reveal="up">
+                                        <div class="w-10 h-10 bg-indigo-100 text-indigo-800 rounded-xl flex items-center justify-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                                        </div>
+                                        <p class="text-xs font-bold text-slate-800" data-i18n="how.statGroupPooling">Group Pooling</p>
+                                        <p class="text-[10px] text-slate-500" data-i18n="how.statGroupPoolingSub">Shared wholesale savings</p>
+                                    </div>
+                                    <div class="how-stat bg-amber-50 rounded-2xl p-4 flex flex-col items-center text-center gap-2" data-reveal="up">
+                                        <div class="w-10 h-10 bg-amber-100 text-amber-800 rounded-xl flex items-center justify-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                                        </div>
+                                        <p class="text-xs font-bold text-slate-800" data-i18n="how.statDelivery">Community Delivery</p>
+                                        <p class="text-[10px] text-slate-500" data-i18n="how.statDeliverySub">Fair trade to your door</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </section>
+
+        <!-- ==================== VIEW: SAVINGS CALCULATOR ==================== -->
+        <section id="view-calculator" class="view-section hidden glass-panel p-6 md:p-8 shadow-sm space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
+                <div>
+                    <span class="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-xs font-extrabold uppercase tracking-wider px-3 py-1 rounded-full mb-2" data-i18n="calc.badge">Interactive Inflation Fighter</span>
+                    <h2 class="text-2xl font-extrabold text-slate-900" data-i18n="calc.title">Neighborhood Family Savings Calculator</h2>
+                    <p class="text-xs text-slate-500 mt-0.5" data-i18n="calc.subtitle">Compare local retail market prices with NuroTewedede direct woreda wholesale group rates.</p>
+                </div>
+                <div class="bg-slate-50 border border-slate-200 p-1.5 rounded-2xl flex items-center gap-1">
+                    <span class="text-[11px] font-bold text-slate-500 px-2 uppercase" data-i18n="calc.family">Family Size:</span>
+                    <button class="calc-family-btn px-3 py-1 rounded-xl text-xs font-bold transition" data-size="2" data-i18n="calc.people2">2 People</button>
+                    <button class="calc-family-btn px-3 py-1 rounded-xl text-xs font-bold transition" data-size="4" data-i18n="calc.people4">4 People</button>
+                    <button class="calc-family-btn px-3 py-1 rounded-xl text-xs font-bold transition" data-size="6" data-i18n="calc.people6">6 People</button>
+                    <button class="calc-family-btn px-3 py-1 rounded-xl text-xs font-bold transition" data-size="8" data-i18n="calc.people8">8 People</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 space-y-5">
+                    <h3 class="text-sm font-extrabold text-slate-900 uppercase tracking-wider" data-i18n="calc.adjust">Adjust Monthly Produce Consumption</h3>
+                    <div id="calc-items" class="space-y-4"></div>
+                </div>
+                <div id="calc-impact-card" class="bg-gradient-to-br from-emerald-900 to-teal-950 text-white rounded-3xl p-6 shadow-lg border border-emerald-800/80 flex flex-col justify-between space-y-6" data-reveal="right">
+                    <div class="space-y-4">
+                        <span class="inline-flex items-center gap-1 bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 px-3 py-1 rounded-full text-xs font-bold uppercase" data-i18n="calc.impact">Calculated Impact</span>
+                        <div>
+                            <p class="text-xs text-emerald-200/80 font-bold uppercase tracking-wider" data-i18n="calc.monthlySavings">Estimated Monthly Savings</p>
+                            <p class="text-3xl sm:text-4xl font-black text-white mt-1"><span id="calc-monthly-savings">0</span> <span class="text-lg font-bold text-emerald-300" data-currency-unit>ETB</span></p>
+                            <p class="text-xs text-emerald-300 font-bold mt-1" id="calc-save-percent-line">Save <span id="calc-save-percent">0</span>% compared to market retail!</p>
+                        </div>
+                        <div class="pt-4 border-t border-emerald-800/80 space-y-2 text-xs">
+                            <div class="flex justify-between"><span class="text-emerald-200/70" data-i18n="calc.retail">Local Retail Expense:</span><span class="font-bold text-slate-300 line-through"><span id="calc-retail">0</span> <span data-currency-unit>ETB</span></span></div>
+                            <div class="flex justify-between"><span class="text-emerald-200/70" data-i18n="calc.wholesale">NuroTewedede Group Cost:</span><span class="font-bold text-emerald-300"><span id="calc-wholesale">0</span> <span data-currency-unit>ETB</span></span></div>
+                            <div class="flex justify-between pt-2 border-t border-emerald-800/60 text-sm font-extrabold text-amber-300"><span data-i18n="calc.annual">Annual Household Savings:</span><span><span id="calc-annual">0</span> <span data-currency-unit>ETB</span> <span data-i18n="calc.year">/ year</span></span></div>
+                        </div>
+                        <div class="bg-white/10 p-3 rounded-2xl border border-white/10 text-[11px] text-emerald-100/90 leading-relaxed" data-i18n="calc.note">
+                            By locking bulk orders with 10–20 neighborhood families, transport costs from farming woredas are divided equally, cutting out speculator markups.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Retail vs Group Cost Bar Chart (populated by JS) -->
+            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 md:p-6" data-reveal="up">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                    <h3 class="text-sm font-extrabold text-slate-900 uppercase tracking-wider" data-i18n="calc.chartTitle">Monthly Cost Comparison — Retail vs Group</h3>
+                    <div class="flex items-center gap-4 text-[11px] font-bold text-slate-600">
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-slate-800"></span><span data-i18n="calc.chartRetail">Market Retail</span></span>
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-emerald-500"></span><span data-i18n="calc.chartGroup">NuroTewedede Group</span></span>
+                    </div>
+                </div>
+                <div id="calc-chart" class="space-y-3"></div>
+            </div>
+        </section>
+
+        <!-- ==================== NUROAI ASSISTANT FLOATING WIDGET ==================== -->
+        <section id="ai-fab-panel" class="hidden fixed bottom-24 right-4 sm:right-6 z-50 w-[360px] max-w-[calc(100vw-2rem)] h-[70vh] max-h-[560px] glass-card rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+            <div class="flex items-center justify-between p-4 bg-emerald-800">
+                <div class="min-w-0">
+                    <h2 class="text-base font-black text-white flex items-center gap-2"><span data-i18n="ai.title">NuroAI Assistant</span>
+                        <span class="inline-flex items-center gap-1 bg-white/15 text-emerald-100 text-[10px] font-bold px-2 py-0.5 rounded-full" data-i18n="ai.modelBadge">Gemini 3.6 Flash</span>
+                    </h2>
+                    <p class="text-[11px] text-emerald-100 truncate" data-i18n="ai.subtitle">Direct Woreda Sourcing, Storage Guidelines, &amp; Group Buying Calculations</p>
+                </div>
+                <button onclick="toggleAiFab()" class="text-white/70 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition shrink-0" data-i18n-aria-label="aria.closeAi" aria-label="Close NuroAI Assistant">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <div id="ai-chips" class="flex items-center gap-2 overflow-x-auto px-4 pt-3 pb-2 scrollbar-thin"></div>
+
+            <div id="ai-messages" class="flex-1 overflow-y-auto space-y-4 px-4 pr-2 scrollbar-thin"></div>
+
+            <form id="ai-form" class="p-4 pt-3 border-t border-slate-200 bg-slate-50 flex gap-2">
+                <input type="text" id="ai-input" placeholder="Ask AI about bulk produce quantities, Gojjam Teff prices, or storage tips..." data-i18n-placeholder="ai.placeholder" class="flex-1 bg-white border border-slate-300 rounded-2xl px-4 py-3 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <button type="submit" id="ai-send-btn" class="bg-emerald-800 hover:bg-emerald-700 disabled:bg-slate-300 text-white p-3 rounded-2xl transition shadow-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                </button>
+            </form>
+        </section>
+
+        <!-- ==================== VIEW: HUB MAP ==================== -->
+        <section id="view-hubs" class="view-section hidden glass-panel p-6 md:p-8 shadow-sm space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
+                <div>
+                    <span class="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-xs font-extrabold uppercase tracking-wider px-3 py-1 rounded-full mb-2" data-i18n="hubs.badge">Woreda-to-Hub Supply Network</span>
+                    <h2 class="text-2xl font-extrabold text-slate-900" data-i18n="hubs.title">Ethiopian Direct Sourcing Map &amp; Hub Locator</h2>
+                    <p class="text-xs text-slate-500 mt-0.5" data-i18n="hubs.subtitle">Track produce movement directly from farm cooperatives to neighborhood distribution points.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="space-y-3" data-reveal="left">
+                    <h3 class="text-xs font-black text-slate-400 uppercase tracking-wider mb-2" data-i18n="hubs.select">Select Neighborhood Distribution Hub</h3>
+                    <div id="hub-list" class="space-y-2"></div>
+                </div>
+                <div class="lg:col-span-2 space-y-4" data-reveal="up">
+                    <div class="relative bg-slate-950 rounded-3xl h-80 sm:h-96 border border-slate-800 p-4 overflow-hidden shadow-inner flex flex-col justify-between">
+                        <svg class="absolute inset-0 w-full h-full opacity-15 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+                                    <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#10b981" strokeWidth="0.5" />
+                                </pattern>
+                            </defs>
+                            <rect width="100%" height="100%" fill="url(#grid)" />
+                        </svg>
+                        <div class="relative z-10 flex justify-between items-center text-xs font-bold text-slate-300 bg-slate-900/80 backdrop-blur-md p-3 rounded-2xl border border-slate-800">
+                            <span class="flex items-center gap-1.5 text-emerald-400" data-i18n="hubs.live">Live Corridor Tracking: Ethiopia</span>
+                            <span><span data-i18n="hubs.hubLabel">Hub:</span> <span id="hub-town">Addis Ababa</span></span>
+                        </div>
+                        <div id="hub-map-nodes" class="relative z-10 w-full h-full"></div>
+                        <div class="relative z-10 bg-slate-900/90 backdrop-blur-md p-3 rounded-2xl border border-slate-800 flex items-center justify-between text-xs text-slate-300">
+                            <div class="flex items-center gap-2">
+                                <span class="animate-bounce">🚚</span>
+                                <span><span data-i18n="hubs.sourcingUnions">Primary Sourcing Unions:</span> <strong id="hub-woredas" class="text-white"></strong></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2">
+                        <h4 id="hub-name" class="text-sm font-extrabold text-slate-900"></h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-600">
+                            <div>
+                                <span class="text-slate-400 font-bold block" data-i18n="hubs.address">Hub Address:</span>
+                                <p id="hub-address" class="font-semibold text-slate-800"></p>
+                            </div>
+                            <div>
+                                <span class="text-slate-400 font-bold block" data-i18n="hubs.directLinks">Direct Woreda Links:</span>
+                                <p id="hub-origins" class="font-semibold text-emerald-700"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== VIEW: MY SHARES ==================== -->
+        <section id="view-myshares" class="view-section hidden glass-panel p-6 md:p-8 shadow-sm space-y-6" data-reveal="up">
+            <div class="border-b border-slate-200 pb-4">
+                <h2 class="text-2xl font-extrabold text-slate-900" data-i18n="myshares.title">My Reserved Shares &amp; Pickup Vouchers</h2>
+                <p class="text-xs text-slate-500 mt-0.5" data-i18n="myshares.subtitle">Show these QR ticket vouchers to your neighborhood hub coordinator when picking up produce.</p>
+            </div>
+            <div id="my-shares-empty" class="hidden text-center py-12 text-slate-400 space-y-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-slate-300 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 17m2 0a2 2 0 110-4 2 2 0 010 4zm12 0a2 2 0 110-4 2 2 0 010 4z"/></svg>
+                <p class="text-sm font-semibold" data-i18n="myshares.empty">You haven't reserved any pool shares yet.</p>
+                <button onclick="showTab('pools')" class="bg-emerald-800 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-emerald-700 transition" data-i18n="myshares.browse">Browse Active Group Pools</button>
+            </div>
+            <div id="my-shares-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </section>
+
+        <!-- ==================== VIEW: MARKETPLACE (Buyer-side supply browsing) ==================== -->
+        <section id="view-marketplace" class="view-section hidden space-y-8">
+            <div class="glass-panel p-6 md:p-8 shadow-sm space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
+                    <div>
+                        <span class="inline-flex items-center gap-1 bg-amber-100 text-amber-800 text-xs font-extrabold uppercase tracking-wider px-3 py-1 rounded-full mb-2" data-i18n="market.badge">Farmer Supply Marketplace</span>
+                        <h2 class="text-2xl font-extrabold text-slate-900" data-i18n="market.title">Buy Directly From Sellers</h2>
+                        <p class="text-xs text-slate-500 mt-0.5" data-i18n="market.subtitle">Browse verified harvest listings from farmers and cooperatives across Ethiopia, with wholesale volume pricing.</p>
+                    </div>
+                    <button onclick="handleSellerEntryPoint()" class="bg-emerald-800 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-bold text-sm transition shadow whitespace-nowrap" data-i18n="market.sellCta">
+                        + Sell Your Harvest
+                    </button>
+                </div>
+
+                <div class="flex flex-col md:flex-row gap-3 items-center justify-between">
+                    <div class="relative w-full md:w-96">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        </span>
+                        <input type="text" id="market-search-input" oninput="applyMarketFilters()" placeholder="Search crop, variety, region or seller..." data-i18n-placeholder="market.search" class="w-full border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                        <select id="market-crop-filter" onchange="applyMarketFilters()" class="border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-600 outline-none bg-white text-slate-700">
+                            <option value="All" data-i18n="market.allCrops">All Crops</option>
+                        </select>
+                        <select id="market-town-filter" onchange="applyMarketFilters()" class="border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-600 outline-none bg-white text-slate-700">
+                            <option value="All" data-i18n="market.allTowns">All Towns</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="market-empty" class="hidden text-center py-12 text-slate-400 space-y-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-slate-300 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                    <p class="text-sm font-semibold" data-i18n="market.empty">No harvest listings match your filters yet.</p>
+                    <button onclick="handleSellerEntryPoint()" class="bg-emerald-800 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-emerald-700 transition" data-i18n="market.beFirst">Be the first seller to list here</button>
+                </div>
+                <div id="market-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            </div>
+        </section>
+
+        <!-- ==================== VIEW: SELLER DASHBOARD ==================== -->
+        <section id="view-seller" class="view-section hidden space-y-8">
+            <!-- Seller Portal hero -->
+            <div class="relative bg-gradient-to-br from-amber-900 via-amber-700 to-orange-600 px-6 py-12 md:py-14 text-center text-white overflow-hidden rounded-3xl shadow-sm">
+                <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 22px 22px;"></div>
+                <div class="relative z-10 max-w-2xl mx-auto space-y-4">
+                    <span class="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-[11px] font-black uppercase tracking-wider px-4 py-1.5 rounded-full" data-i18n="seller.badge">Seller Portal</span>
+                    <h2 class="text-3xl md:text-4xl font-black tracking-tight" data-i18n="seller.heroTitle">Turn Your Harvest Into Income</h2>
+                    <p class="text-sm md:text-base text-amber-100 leading-relaxed" data-i18n="seller.heroSub">List quality-graded supply, set your own pricing and reach neighborhood buyers across Ethiopia.</p>
+                    <div class="flex flex-wrap justify-center gap-2 pt-1">
+                        <span class="bg-black/20 border border-white/10 text-[11px] font-bold px-3 py-1 rounded-full">💰 <span data-i18n="seller.heroChip1">Fair Pricing</span></span>
+                        <span class="bg-black/20 border border-white/10 text-[11px] font-bold px-3 py-1 rounded-full">🤝 <span data-i18n="seller.heroChip2">Direct to Buyers</span></span>
+                        <span class="bg-black/20 border border-white/10 text-[11px] font-bold px-3 py-1 rounded-full">📦 <span data-i18n="seller.heroChip3">Inventory Control</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Supply dashboard -->
+            <div class="glass-panel rounded-3xl shadow-sm p-6 md:p-8 space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
+                    <div>
+                        <h2 class="text-2xl font-extrabold text-slate-900" data-i18n="seller.title">Your Harvest, Your Marketplace</h2>
+                        <p class="text-xs text-slate-500 mt-0.5" data-i18n="seller.subtitle">Publish quality-graded supply listings and connect directly with neighborhood buyers.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="openListHarvestModal()" class="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-xl font-bold text-sm transition shadow whitespace-nowrap" data-i18n="seller.listCta">
+                            + List Your Harvest
+                        </button>
+                        <button onclick="openCollectiveModal()" class="bg-emerald-700 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold text-sm transition shadow whitespace-nowrap border border-emerald-500" data-i18n="seller.collectiveCta">
+                            ⚡ Pool & Sell Together
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Seller sub-navigation command center -->
+                <div class="rounded-2xl bg-slate-900 border border-slate-700/60 shadow-lg p-3">
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        <!-- Left: breadcrumb / identity -->
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-2 bg-slate-800 border border-slate-700/60 rounded-xl px-3 py-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                <div class="leading-tight">
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider" data-i18n="seller.subnav.breadcrumb">Seller Command Center</p>
+                                    <p class="text-xs text-slate-300 font-semibold" data-i18n="seller.subnav.context">Inventory &amp; Pool Fulfillment</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Center: core tabs -->
+                        <div class="flex items-center gap-1 bg-slate-800/60 p-1 rounded-xl border border-slate-700/60 w-fit">
+                            <button onclick="setSellerSubTab('listings')" id="seller-subtab-listings" class="seller-subtab px-4 py-2 rounded-lg text-xs font-bold transition bg-emerald-600 text-white shadow-sm" data-i18n="seller.subnav.listings">
+                                📦 My Listings
+                            </button>
+                            <button onclick="setSellerSubTab('pools')" id="seller-subtab-pools" class="seller-subtab px-4 py-2 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white hover:bg-slate-700/60" data-i18n="seller.subnav.pools">
+                                🤝 Active Pools
+                            </button>
+                            <button onclick="setSellerSubTab('escrow')" id="seller-subtab-escrow" class="seller-subtab px-4 py-2 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white hover:bg-slate-700/60" data-i18n="seller.subtab.escrow">
+                                💰 Escrow &amp; Payouts
+                            </button>
+                        </div>
+
+                        <!-- Right: tools & status -->
+                        <div class="flex items-center gap-2">
+                            <span class="trust-badge trust-badge--direct text-[10px] font-bold px-2.5 py-1.5 rounded-lg" data-tooltip="Your account is hub-verified">
+                                <span class="flex items-center gap-1.5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                                    Hub Verified
+                                </span>
+                            </span>
+                            <button class="relative p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition border border-slate-700/60" aria-label="Notifications" data-i18n-aria-label="seller.notifications">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                                <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+                            </button>
+                            <button onclick="openSellerSettings()" class="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition border border-slate-700/60" aria-label="Settings" data-i18n-aria-label="seller.settings">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seller workflow tabs -->
+                <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-fit">
+                    <button onclick="setSellerWorkflow('direct')" id="seller-tab-direct" class="seller-workflow-tab px-4 py-2 rounded-lg text-xs font-bold transition bg-white text-slate-900 shadow-sm" data-i18n="seller.workflowDirect">
+                        🛍️ Direct Selling
+                    </button>
+                    <button onclick="setSellerWorkflow('collective')" id="seller-tab-collective" class="seller-workflow-tab px-4 py-2 rounded-lg text-xs font-bold transition text-slate-600 hover:text-slate-900" data-i18n="seller.workflowCollective">
+                        🤝 Collective Pools
+                    </button>
+                </div>
+
+                <!-- Direct selling content -->
+                <div id="seller-direct-panel" class="space-y-4">
+                    <div id="seller-stats" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
+                    <div id="seller-empty" class="hidden text-center py-12 text-slate-400 space-y-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-slate-300 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9h.5M8 11h2v2H8z"/></svg>
+                        <p class="text-sm font-semibold" data-i18n="seller.empty">You haven't listed any harvest yet.</p>
+                        <button onclick="openListHarvestModal()" class="bg-amber-600 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-amber-500 transition" data-i18n="seller.emptyCta">List your first harvest</button>
+                    </div>
+                    <div id="seller-direct-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+
+                    <!-- Contextual buyer demand / marketplace opportunities -->
+                    <div id="seller-demand-section" class="mt-6 pt-6 border-t border-slate-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-sm font-extrabold text-slate-900 uppercase tracking-wider" data-i18n="seller.demandTitle">Live Buyer Demand</h3>
+                                <p class="text-xs text-slate-500 mt-0.5" data-i18n="seller.demandSubtitle">Active neighborhood pools looking for supply like yours.</p>
+                            </div>
+                            <button onclick="showTab('pools')" class="text-xs font-bold text-emerald-700 hover:text-emerald-800 transition" data-i18n="seller.viewAllPools">View all pools →</button>
+                        </div>
+                        <div id="seller-demand-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                        <div id="seller-demand-empty" class="hidden text-center py-8 text-slate-400 text-xs">No active buyer pools at the moment.</div>
+                    </div>
+                </div>
+
+                <!-- Collective pools content -->
+                <div id="seller-collective-panel" class="hidden space-y-4">
+                    <div id="collective-stats" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
+                    <div id="collective-empty" class="hidden text-center py-12 text-slate-400 space-y-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-slate-300 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                        <p class="text-sm font-semibold" data-i18n="seller.collectiveEmpty">No collective pools yet.</p>
+                        <button onclick="openCollectiveModal()" class="bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-emerald-600 transition" data-i18n="seller.collectiveEmptyCta">Create your first collective pool</button>
+                    </div>
+                    <div id="seller-collective-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                </div>
+
+                <!-- Escrow & payouts content (launching soon) -->
+                <div id="seller-escrow-panel" class="hidden">
+                    <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 md:p-10 text-center text-white relative overflow-hidden">
+                        <div class="absolute inset-0 opacity-20" style="background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,.25) 1px, transparent 0); background-size:22px 22px;" aria-hidden="true"></div>
+                        <div class="relative">
+                            <div class="w-14 h-14 mx-auto bg-emerald-500/15 border border-emerald-400/30 rounded-2xl flex items-center justify-center text-3xl mb-4">💰</div>
+                            <h4 class="text-xl font-black mb-2" data-i18n="seller.escrowTitle">Escrow &amp; Payouts</h4>
+                            <p class="text-xs text-slate-300 max-w-md mx-auto leading-relaxed" data-i18n="seller.escrowText">Funds from completed group buys will appear here — held in hub-verified escrow and released automatically once pickup is confirmed at your distribution point.</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6 max-w-2xl mx-auto text-left">
+                                <div class="bg-white/5 border border-white/10 rounded-xl p-3">
+                                    <p class="text-sm mb-0.5">🔒</p>
+                                    <p class="text-[11px] font-bold text-emerald-300" data-i18n="seller.escrowB1">Protected until pickup</p>
+                                </div>
+                                <div class="bg-white/5 border border-white/10 rounded-xl p-3">
+                                    <p class="text-sm mb-0.5">⚡</p>
+                                    <p class="text-[11px] font-bold text-emerald-300" data-i18n="seller.escrowB2">Payouts within 48h</p>
+                                </div>
+                                <div class="bg-white/5 border border-white/10 rounded-xl p-3">
+                                    <p class="text-sm mb-0.5">📱</p>
+                                    <p class="text-[11px] font-bold text-emerald-300" data-i18n="seller.escrowB3">Telebirr &amp; CBE direct</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- How it works for sellers -->
+            <div class="glass-card rounded-3xl shadow-sm p-6 md:p-8">
+                <div class="text-center mb-6">
+                    <span class="inline-block bg-amber-100 text-amber-800 text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full" data-i18n="seller.howBadge">How it works for sellers</span>
+                    <h3 class="text-2xl font-extrabold text-slate-900 mt-2" data-i18n="seller.howTitle">From harvest to income in three steps</h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div class="text-center p-5 rounded-2xl bg-slate-50 border border-slate-200">
+                        <div class="w-10 h-10 mx-auto rounded-full bg-amber-600 text-white text-lg font-black grid place-items-center mb-3">1</div>
+                        <h4 class="text-sm font-extrabold text-slate-900" data-i18n="seller.howStep1Title">List your harvest</h4>
+                        <p class="text-xs text-slate-500 leading-relaxed mt-1" data-i18n="seller.howStep1Text">Publish your crop with quality grades, volume, harvest year and photos.</p>
+                    </div>
+                    <div class="text-center p-5 rounded-2xl bg-slate-50 border border-slate-200">
+                        <div class="w-10 h-10 mx-auto rounded-full bg-amber-600 text-white text-lg font-black grid place-items-center mb-3">2</div>
+                        <h4 class="text-sm font-extrabold text-slate-900" data-i18n="seller.howStep2Title">Set your pricing</h4>
+                        <p class="text-xs text-slate-500 leading-relaxed mt-1" data-i18n="seller.howStep2Text">Choose fixed or negotiable pricing and minimum order lots for serious buyers.</p>
+                    </div>
+                    <div class="text-center p-5 rounded-2xl bg-slate-50 border border-slate-200">
+                        <div class="w-10 h-10 mx-auto rounded-full bg-amber-600 text-white text-lg font-black grid place-items-center mb-3">3</div>
+                        <h4 class="text-sm font-extrabold text-slate-900" data-i18n="seller.howStep3Title">Reach buyers &amp; manage sales</h4>
+                        <p class="text-xs text-slate-500 leading-relaxed mt-1" data-i18n="seller.howStep3Text">Buyers discover your supply; manage inventory and mark listings sold.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seller benefits -->
+            <div class="glass-card rounded-3xl shadow-sm p-6 md:p-8">
+                <h3 class="text-2xl font-extrabold text-slate-900 text-center mb-6" data-i18n="seller.benefitTitle">Why sell on NuroTewedede</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div class="rounded-2xl border border-slate-200 p-5 text-center">
+                        <div class="w-12 h-12 mx-auto rounded-2xl bg-amber-100 text-amber-800 grid place-items-center text-xl mb-3">💸</div>
+                        <h4 class="text-sm font-extrabold text-slate-900" data-i18n="seller.benefit1Title">Fair farm-gate prices</h4>
+                        <p class="text-xs text-slate-500 leading-relaxed mt-1" data-i18n="seller.benefit1Text">No exploitative middlemen — your produce reaches buyers at wholesale value.</p>
+                    </div>
+                    <div class="rounded-2xl border border-slate-200 p-5 text-center">
+                        <div class="w-12 h-12 mx-auto rounded-2xl bg-amber-100 text-amber-800 grid place-items-center text-xl mb-3">🤝</div>
+                        <h4 class="text-sm font-extrabold text-slate-900" data-i18n="seller.benefit2Title">Direct market reach</h4>
+                        <p class="text-xs text-slate-500 leading-relaxed mt-1" data-i18n="seller.benefit2Text">Connect with neighborhood hubs and group buyers across Ethiopia.</p>
+                    </div>
+                    <div class="rounded-2xl border border-slate-200 p-5 text-center">
+                        <div class="w-12 h-12 mx-auto rounded-2xl bg-amber-100 text-amber-800 grid place-items-center text-xl mb-3">📦</div>
+                        <h4 class="text-sm font-extrabold text-slate-900" data-i18n="seller.benefit3Title">Simple inventory control</h4>
+                        <p class="text-xs text-slate-500 leading-relaxed mt-1" data-i18n="seller.benefit3Text">Update volumes, edit listings and mark sold in one place.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Create Pool Modal Form -->
+    <div id="pool-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="glass-card rounded-2xl max-w-md w-full p-6 shadow-2xl relative overflow-y-auto max-h-[90vh]">
+            <h3 class="text-xl font-bold text-slate-800 mb-4" data-i18n="create.title">Launch a New Buying Pool</h3>
+            <form id="create-form" onsubmit="handleCreatePool(event)" class="space-y-4">
+                <div>
+                    <label for="item-name" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="create.item">Item / Produce Name</label>
+                    <input type="text" id="item-name" required placeholder="e.g. Teff (White Gojjam) - 50kg" data-i18n-placeholder="create.itemPh" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="item-category" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="create.category">Category</label>
+                        <select id="item-category" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                            <option value="Grains & Teff" data-i18n="cat.grains">Grains &amp; Teff</option>
+                            <option value="Vegetables" data-i18n="cat.vegetables">Vegetables</option>
+                            <option value="Coffee & Spices" data-i18n="cat.coffee">Coffee &amp; Spices</option>
+                            <option value="Oil & Pulses" data-i18n="cat.oil">Oil &amp; Pulses</option>
+                            <option value="Fruits" data-i18n="cat.fruits">Fruits</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="item-town" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="create.town">Town / Hub</label>
+                        <select id="item-town" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none"></select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="item-woreda" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="create.woreda">Woreda Origin</label>
+                        <input type="text" id="item-woreda" required placeholder="e.g. Debre Markos" data-i18n-placeholder="create.woredaPh" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                    </div>
+                    <div>
+                        <label for="item-unit" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="create.unit">Packaging Unit</label>
+                        <input type="text" id="item-unit" placeholder="e.g. 50 kg Bag" data-i18n-placeholder="create.unitPh" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label for="item-price" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="create.wholesale">Wholesale ETB</label>
+                        <input type="number" id="item-price" required placeholder="1250" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                    </div>
+                    <div>
+                        <label for="item-retail" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="create.retail">Retail ETB</label>
+                        <input type="number" id="item-retail" placeholder="auto (45% markup)" data-i18n-placeholder="create.retailPh" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                    </div>
+                    <div>
+                        <label for="item-target" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="create.target">Target Shares</label>
+                        <input type="number" id="item-target" required placeholder="20" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label for="item-hub" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="create.hub">Pickup Hub Location</label>
+                    <input type="text" id="item-hub" placeholder="e.g. Bole Megenagna Hub #2" data-i18n-placeholder="create.hubPh" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                </div>
+                <div>
+                    <label for="item-organizer" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="create.organizer">Organizer Name / Group Leader</label>
+                    <input type="text" id="item-organizer" placeholder="e.g. Abebe Tadesse (Kebele Coordinator)" data-i18n-placeholder="create.organizerPh" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                </div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 text-slate-600 text-sm font-semibold hover:bg-slate-100 rounded-lg transition" data-i18n="common.cancel">Cancel</button>
+                    <button type="submit" class="bg-emerald-700 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-emerald-800 transition shadow" data-i18n="create.submit">Create Pool</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Collective Pool Modal -->
+    <div id="collective-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="glass-card rounded-2xl max-w-lg w-full p-6 shadow-2xl relative overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-slate-800" data-i18n="collective.title">Create Collective Pool</h3>
+                <button onclick="closeCollectiveModal()" class="text-slate-400 hover:text-slate-600 transition" data-i18n-aria-label="aria.closeModal" aria-label="Close modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <p class="text-xs text-slate-500 mb-4" data-i18n="collective.subtitle">Pool harvest quantities with neighboring micro-producers to reach bulk wholesale targets and maximize income.</p>
+            <form id="collective-form" onsubmit="handleCollectiveSubmit(event)" class="space-y-3">
+                <div>
+                    <label for="collective-name" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="collective.poolName">Pool Name</label>
+                    <input type="text" id="collective-name" required placeholder="e.g. Gojjam Teff Collective" data-i18n-placeholder="collective.poolNamePh" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="collective-crop" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="collective.crop">Crop / Produce</label>
+                        <select id="collective-crop" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none"></select>
+                    </div>
+                    <div>
+                        <label for="collective-town" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="collective.hub">Hub / Town</label>
+                        <select id="collective-town" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none"></select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="collective-target" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="collective.targetQty">Target Quantity</label>
+                        <input type="number" id="collective-target" required min="1" step="1" placeholder="e.g. 100" data-i18n-placeholder="collective.targetQtyPh" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                    </div>
+                    <div>
+                        <label for="collective-unit" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="collective.unit">Unit</label>
+                        <select id="collective-unit" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                            <option value="quintal" data-i18n="unit.quintal">Quintal</option>
+                            <option value="kg" data-i18n="unit.kg">Kg</option>
+                            <option value="mt" data-i18n="unit.mt">Metric Ton</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="collective.contributions">Contributor Breakdown</label>
+                    <div id="collective-contributors" class="space-y-2">
+                        <div class="flex gap-2 items-center contributor-row">
+                            <input type="text" placeholder="Producer name" class="flex-1 border border-slate-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-emerald-600 outline-none contributor-name" required>
+                            <input type="number" placeholder="%" min="0" max="100" class="w-20 border border-slate-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-emerald-600 outline-none contributor-pct" required>
+                            <button type="button" onclick="removeContributorRow(this)" class="text-rose-500 hover:text-rose-700 text-xs font-bold px-2">✕</button>
+                        </div>
+                    </div>
+                    <button type="button" onclick="addContributorRow()" class="mt-2 text-xs font-bold text-emerald-700 hover:text-emerald-800 transition" data-i18n="collective.addContributor">+ Add Contributor</button>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="collective-price" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="collective.priceUnit">Price per Unit (ETB)</label>
+                        <input type="number" id="collective-price" required min="0" step="1" placeholder="e.g. 4500" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                    </div>
+                    <div>
+                        <label for="collective-pricing" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="collective.pricing">Pricing Model</label>
+                        <select id="collective-pricing" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                            <option value="fixed" data-i18n="harvest.pricingFixed">Fixed Price (ETB)</option>
+                            <option value="negotiable" data-i18n="harvest.pricingNegotiable">Negotiable</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label for="collective-desc" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="collective.desc">Description (optional)</label>
+                    <textarea id="collective-desc" rows="2" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none" data-i18n-placeholder="collective.descPh"></textarea>
+                </div>
+                <div class="flex justify-end gap-3 mt-4">
+                    <button type="button" onclick="closeCollectiveModal()" class="px-4 py-2 text-slate-600 text-sm font-semibold hover:bg-slate-100 rounded-lg transition" data-i18n="common.cancel">Cancel</button>
+                    <button type="submit" class="bg-emerald-700 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-emerald-800 transition shadow" data-i18n="collective.submit">Create Collective Pool</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Reserve Modal -->
+    <div id="reserve-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto">
+        <div id="reserve-modal-card" class="glass-card rounded-2xl max-w-lg w-full p-6 shadow-2xl relative"></div>
+    </div>
+
+    <!-- Sourcing Specs Modal -->
+    <div id="sourcing-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto">
+        <div id="sourcing-modal-card" class="glass-card rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative overflow-y-auto max-h-[90vh]"></div>
+    </div>
+
+    <!-- Pickup Voucher Modal (My Reservations) -->
+    <div id="voucher-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto">
+        <div id="voucher-modal-card" class="glass-card rounded-2xl max-w-md w-full p-6 shadow-2xl relative"></div>
+    </div>
+
+    <!-- Bulk & Institutional Purchase Modal -->
+    <div id="bulk-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="glass-card rounded-2xl max-w-lg w-full p-6 shadow-2xl relative overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-center mb-1">
+                <h3 class="text-xl font-bold text-slate-800" data-i18n="bulk.title">Bulk &amp; Institutional Purchase</h3>
+                <button onclick="closeBulkModal()" class="text-slate-400 hover:text-slate-600 transition" data-i18n-aria-label="aria.closeModal" aria-label="Close modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <p class="text-xs text-slate-500 mb-4" data-i18n="bulk.subtitle">For cafés, restaurants, schools, hotels &amp; co-ops ordering 100+ kg per month. We connect you directly to the regional woreda supply network.</p>
+
+            <div id="bulk-catalog" class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4"></div>
+
+            <form id="bulk-form" onsubmit="handleBulkSubmit(event)" class="space-y-3">
+                <div>
+                    <label for="bulk-business" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="bulk.business">Business / Institution Name</label>
+                    <input type="text" id="bulk-business" required placeholder="e.g. Selam Café &amp; Restaurant" data-i18n-placeholder="bulk.businessPh" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label for="bulk-contact" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="bulk.contact">Contact Person</label>
+                        <input type="text" id="bulk-contact" required placeholder="e.g. Tigist Alemu" data-i18n-placeholder="bulk.contactPh" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                    </div>
+                    <div>
+                        <label for="bulk-phone" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="bulk.phone">Phone / WhatsApp</label>
+                        <input type="tel" id="bulk-phone" required placeholder="09 12 345 678" data-i18n-placeholder="bulk.phonePh" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label for="bulk-qty" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="bulk.volume">Monthly Volume (quintals)</label>
+                        <input type="number" id="bulk-qty" min="1" required oninput="updateBulkSummary()" placeholder="e.g. 5" data-i18n-placeholder="bulk.volumePh" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                    </div>
+                    <div>
+                        <label for="bulk-town" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="bulk.destination">Destination Hub</label>
+                        <select id="bulk-town" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none"></select>
+                    </div>
+                </div>
+                <div>
+                    <label for="bulk-produce" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="bulk.produce">Primary Produce Needed</label>
+                    <select id="bulk-produce" onchange="updateBulkSummary()" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                        <option value="Teff" data-i18n="calc.item1">White Teff (Gojjam)</option>
+                        <option value="Onions" data-i18n="calc.item2">Red Onions (Ziway)</option>
+                        <option value="Coffee" data-i18n="calc.item3">Raw Coffee Beans (Sidama)</option>
+                        <option value="Oil" data-i18n="calc.item4">Sunflower Cooking Oil</option>
+                        <option value="Lentils" data-i18n="calc.item5">Red Lentils (Misir)</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="bulk-note" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="bulk.notes">Special Notes (optional)</label>
+                    <textarea id="bulk-note" rows="2" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none" data-i18n-placeholder="bulk.notesPh"></textarea>
+                </div>
+                <div id="bulk-summary" class="hidden bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-900 space-y-1"></div>
+                <div class="flex justify-end gap-3 mt-4">
+                    <button type="button" onclick="closeBulkModal()" class="px-4 py-2 text-slate-600 text-sm font-semibold hover:bg-slate-100 rounded-lg transition" data-i18n="common.cancel">Cancel</button>
+                    <button type="submit" class="bg-emerald-700 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-emerald-800 transition shadow" data-i18n="bulk.submit">Submit Bulk Inquiry</button>
+                </div>
+            </form>
+
+            <div id="bulk-success" class="hidden text-center py-6 space-y-3">
+                <div class="w-14 h-14 mx-auto bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                </div>
+                <h4 class="text-lg font-extrabold text-slate-900" data-i18n="bulk.successTitle">Bulk Inquiry Received!</h4>
+                <p class="text-xs text-slate-500" data-i18n="bulk.successText">Our woreda sourcing team will contact you within 24 hours to confirm pricing, volume discounts and delivery schedule.</p>
+                <div class="bg-slate-900 text-emerald-400 font-mono text-sm px-4 py-2.5 rounded-xl inline-block">
+                    <span data-i18n="bulk.ref">Reference:</span> <span id="bulk-ref" class="font-black">--</span>
+                </div>
+                <div>
+                    <button onclick="closeBulkModal()" class="bg-emerald-700 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-emerald-800 transition shadow" data-i18n="bulk.done">Done</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pool Details Modal -->
+    <div id="details-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto">
+        <div id="details-modal-card" class="glass-card rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative"></div>
+    </div>
+
+    <!-- Share Pool Modal -->
+    <div id="share-menu" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="glass-card rounded-2xl max-w-sm w-full p-6 shadow-2xl relative">
+            <button type="button" onclick="closeShareMenu()" class="absolute top-4 right-4 p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition" data-i18n-aria-label="aria.close" aria-label="Close">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <div class="space-y-4">
+                <div>
+                    <h3 class="text-lg font-black text-slate-900" data-i18n="share.title">Share Pool</h3>
+                    <p class="text-xs text-slate-500 mt-1 break-words" data-share-title></p>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <a data-share-telegram href="#" target="_blank" rel="noopener" class="p-3 rounded-2xl border border-slate-200 text-center text-xs font-bold text-slate-700 hover:bg-slate-50 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mx-auto mb-1 text-sky-500" fill="currentColor" viewBox="0 0 24 24"><path d="M21.94 4.35l-3.1 14.63a1 1 0 01-1.53.61l-4.33-3.16-2.1 2.03a1 1 0 01-1.7-.7v-4.6L2.6 8.16a1 1 0 01.23-1.67L21.1 2.8a.8.8 0 01.84 1.55z"/></svg>
+                        <span data-i18n="card.shareTelegram">Telegram</span>
+                    </a>
+                    <a data-share-whatsapp href="#" target="_blank" rel="noopener" class="p-3 rounded-2xl border border-slate-200 text-center text-xs font-bold text-slate-700 hover:bg-slate-50 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mx-auto mb-1 text-green-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a10 10 0 00-8.6 15.06L2 22l5.1-1.33A10 10 0 1012 2zm0 2a8 8 0 110 16 7.95 7.95 0 01-4.08-1.11l-.3-.18-3 .79.8-2.93-.2-.3A8 8 0 0112 4zm-3.2 4.3c-.16-.36-.34-.37-.5-.38h-.42c-.15 0-.4.06-.6.29-.21.22-.79.77-.79 1.88 0 1.1.8 2.17.92 2.32.11.15 1.57 2.4 3.8 3.37 1.9.82 2.28.66 2.7.62.41-.04 1.33-.54 1.52-1.07.19-.52.19-.97.13-1.06-.06-.1-.21-.15-.44-.26-.22-.12-1.33-.66-1.54-.73-.2-.07-.35-.1-.5.1-.15.22-.58.73-.71.88-.13.15-.26.16-.48.06-.22-.11-.94-.35-1.8-1.1-.66-.6-1.1-1.33-1.23-1.55-.13-.22-.01-.35.1-.46.1-.1.22-.27.34-.4.11-.14.15-.23.22-.39.07-.15.04-.29-.02-.4-.06-.12-.5-1.2-.69-1.65z"/></svg>
+                        <span data-i18n="card.shareWhatsapp">WhatsApp</span>
+                    </a>
+                    <button data-share-copy onclick="copyShareLink(this)" class="p-3 rounded-2xl border border-slate-200 text-center text-xs font-bold text-slate-700 hover:bg-slate-50 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mx-auto mb-1 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                        <span data-i18n="card.copyLink">Copy Link</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- List Your Harvest Modal (Seller Portal) -->
+    <div id="harvest-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="glass-card rounded-2xl max-w-lg w-full p-6 shadow-2xl relative overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-center mb-1">
+                <h3 id="harvest-modal-title" class="text-xl font-bold text-slate-800" data-i18n="harvest.title">List Your Harvest</h3>
+                <button onclick="closeListHarvestModal()" class="text-slate-400 hover:text-slate-600 transition" data-i18n-aria-label="aria.closeModal" aria-label="Close modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <p class="text-xs text-slate-500 mb-4" data-i18n="harvest.subtitle">Publish your supply listing — quality, volume, pricing and origin. Buyers in the marketplace will see it instantly.</p>
+
+            <form id="harvest-form" onsubmit="handleListHarvestSubmit(event)" class="space-y-3">
+                <input type="hidden" id="harvest-id">
+                <div>
+                    <label for="harvest-crop" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="harvest.crop">Crop / Produce</label>
+                    <select id="harvest-crop" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none"></select>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label for="harvest-variety" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="harvest.variety">Variety</label>
+                        <input type="text" id="harvest-variety" placeholder="e.g. White Gojjam" data-i18n-placeholder="harvest.varietyPh" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                    </div>
+                    <div>
+                        <label for="harvest-year" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="harvest.year">Harvest Year</label>
+                        <input type="text" id="harvest-year" placeholder="e.g. 2026" data-i18n-placeholder="harvest.yearPh" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label for="harvest-grade" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="harvest.quality">Quality / Grade</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <input type="text" id="harvest-grade" placeholder="e.g. Grade 1" data-i18n-placeholder="harvest.gradePh" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                        <input type="number" id="harvest-moisture" min="0" max="100" step="0.1" placeholder="Moisture %" data-i18n-placeholder="harvest.moisture" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                        <input type="number" id="harvest-cleanliness" min="0" max="100" step="1" placeholder="Cleanliness %" data-i18n-placeholder="harvest.cleanliness" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="harvest-volume" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="harvest.volume">Total Volume</label>
+                        <input type="number" id="harvest-volume" min="0.1" step="0.01" required placeholder="e.g. 50" data-i18n-placeholder="harvest.volumePh" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                    </div>
+                    <div>
+                        <label for="harvest-volume-unit" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="harvest.volumeUnit">Unit</label>
+                        <select id="harvest-volume-unit" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                            <option value="quintal" data-i18n="harvest.unitQuintal">Quintal (100 kg)</option>
+                            <option value="kg" data-i18n="harvest.unitKg">Kilograms (kg)</option>
+                            <option value="mt" data-i18n="harvest.unitMt">Metric Ton (1000 kg)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="harvest-min-lot" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="harvest.minLot">Min. Order Lot</label>
+                        <input type="number" id="harvest-min-lot" min="0" step="0.01" placeholder="e.g. 1" data-i18n-placeholder="harvest.minLotPh" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                    </div>
+                    <div>
+                        <label for="harvest-min-unit" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="harvest.minLotUnit">Lot Unit</label>
+                        <select id="harvest-min-unit" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                            <option value="quintal" data-i18n="harvest.unitQuintal">Quintal (100 kg)</option>
+                            <option value="kg" data-i18n="harvest.unitKg">Kilograms (kg)</option>
+                            <option value="mt" data-i18n="harvest.unitMt">Metric Ton (1000 kg)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="harvest-pricing" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="harvest.pricing">Pricing Model</label>
+                        <select id="harvest-pricing" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                            <option value="fixed" data-i18n="harvest.pricingFixed">Fixed Price (ETB)</option>
+                            <option value="negotiable" data-i18n="harvest.pricingNegotiable">Negotiable</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="harvest-price" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="harvest.pricePerUnit">Price per Lot (ETB)</label>
+                        <input type="number" id="harvest-price" min="0" step="1" required placeholder="e.g. 4500" data-i18n-placeholder="harvest.pricePh" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label for="harvest-region" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="harvest.origin">Origin Location</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <input type="text" id="harvest-region" placeholder="Region" data-i18n-placeholder="harvest.regionPh" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                        <input type="text" id="harvest-zone" placeholder="Zone" data-i18n-placeholder="harvest.zonePh" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                        <select id="harvest-town" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none"></select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="harvest-available-from" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="harvest.availableFrom">Available From</label>
+                        <input type="date" id="harvest-available-from" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                    </div>
+                    <div>
+                        <label for="harvest-available-to" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="harvest.availableTo">Available Until</label>
+                        <input type="date" id="harvest-available-to" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label for="harvest-photo-url" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="harvest.photos">Product Photos</label>
+                    <div class="flex flex-col gap-2">
+                        <input type="url" id="harvest-photo-url" placeholder="https://... (optional)" data-i18n-placeholder="harvest.photoUrlPh" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                        <label class="cursor-pointer inline-flex items-center justify-center gap-2 border border-dashed border-slate-300 rounded-lg p-2.5 text-xs font-bold text-slate-500 hover:border-emerald-400 hover:text-emerald-700 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            <span data-i18n="harvest.upload">Upload from device</span>
+                            <input type="file" id="harvest-photo-upload" accept="image/*" multiple class="hidden" onchange="handleHarvestPhotos(event)">
+                        </label>
+                    </div>
+                    <div id="harvest-photo-previews" class="hidden mt-2 flex flex-wrap gap-2"></div>
+                </div>
+                <div>
+                    <label for="harvest-desc" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="harvest.desc">Description (optional)</label>
+                    <textarea id="harvest-desc" rows="2" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none" data-i18n-placeholder="harvest.descPh"></textarea>
+                </div>
+                <div class="flex justify-end gap-3 mt-4">
+                    <button type="button" onclick="closeListHarvestModal()" class="px-4 py-2 text-slate-600 text-sm font-semibold hover:bg-slate-100 rounded-lg transition" data-i18n="common.cancel">Cancel</button>
+                    <button type="submit" class="bg-emerald-700 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-emerald-800 transition shadow" data-i18n="harvest.submit">Publish Listing</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Product / Listing Detail Modal -->
+    <div id="product-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto">
+        <div id="product-modal-card" class="glass-card rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative"></div>
+    </div>
+
+    <!-- Auth Modal Container -->
+        <div id="auth-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="glass-card rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h3 id="auth-modal-title" class="text-xl font-bold text-slate-800">Buyer Sign In</h3>
+                    <p id="auth-role-hint" class="text-[11px] font-medium text-slate-500 leading-relaxed mt-0.5">Access your Buyer Portal: join pools, reserve shares and buy from hubs.</p>
+                </div>
+                <button id="close-auth-modal" class="text-slate-400 hover:text-slate-600 transition" data-i18n-aria-label="aria.closeModal" aria-label="Close modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="flex border-b border-slate-200 mb-4">
+                <button id="auth-tab-signin" type="button" class="flex-1 pb-2 text-center text-sm font-bold border-b-2 border-emerald-600 text-emerald-800" onclick="toggleAuthMode(false)" data-i18n="auth.signin">Sign In</button>
+                <button id="auth-tab-signup" type="button" class="flex-1 pb-2 text-center text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-800" onclick="toggleAuthMode(true)" data-i18n="auth.signup">Create Account</button>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-xs font-bold uppercase text-slate-600 mb-2" data-i18n="auth.roleLabel">Continue as</label>
+                <div class="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Account type" data-i18n-aria-label="auth.accountType">
+                    <button type="button" id="auth-role-buyer" onclick="selectAuthRole('buyer')" class="auth-role-btn flex flex-col items-center gap-1 rounded-xl border-2 p-3 text-center transition" data-selected="true">
+                        <span class="text-2xl leading-none">🛒</span>
+                        <span class="text-xs font-extrabold" data-i18n="auth.roleBuyer">Buyer</span>
+                        <span class="text-[10px] text-slate-500 leading-tight" data-i18n="auth.roleBuyerSub">Join pools &amp; reserve shares</span>
+                    </button>
+                    <button type="button" id="auth-role-seller" onclick="selectAuthRole('seller')" class="auth-role-btn flex flex-col items-center gap-1 rounded-xl border-2 p-3 text-center transition">
+                        <span class="text-2xl leading-none">🌾</span>
+                        <span class="text-xs font-extrabold" data-i18n="auth.roleSeller">Seller</span>
+                        <span class="text-[10px] text-slate-500 leading-tight" data-i18n="auth.roleSellerSub">List your harvest</span>
+                    </button>
+                </div>
+                <input type="hidden" id="auth-role" value="buyer">
+            </div>
+
+            <form id="auth-form" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+                <div id="auth-name-field" class="hidden">
+                    <label for="auth-name" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="auth.name">Full Name</label>
+                    <input type="text" id="auth-name" autocomplete="name" placeholder="Abebe Kebede" data-i18n-placeholder="auth.namePh" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                </div>
+                <div id="auth-username-field" class="hidden">
+                    <label for="auth-username" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="auth.username">Username</label>
+                    <input type="text" id="auth-username" autocomplete="username" placeholder="abebe123" data-i18n-placeholder="auth.usernamePh" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                </div>
+                <div>
+                    <label id="auth-email-label" for="auth-email" class="block text-xs font-bold uppercase text-slate-600 mb-1">Email or Username</label>
+                    <input type="text" id="auth-email" required autocomplete="username" placeholder="name@example.com" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                </div>
+                <div>
+                    <label for="auth-password" class="block text-xs font-bold uppercase text-slate-600 mb-1" data-i18n="auth.password">Password</label>
+                    <input type="password" id="auth-password" required autocomplete="current-password" placeholder="••••••••" data-i18n-placeholder="auth.passwordPh" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-600 outline-none">
+                </div>
+                <button type="submit" id="auth-submit-btn" class="w-full bg-emerald-700 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-emerald-800 transition shadow" data-i18n="auth.signin">Sign In</button>
+                <div id="auth-message" class="text-sm font-medium hidden p-3 rounded-lg text-center"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 hidden bg-emerald-900 text-white border border-emerald-700 px-4 py-3 rounded-2xl shadow-2xl text-xs font-bold" role="status" aria-live="polite"></div>
+
+    <!-- Floating NuroAI Assistant Launcher -->
+    <button id="ai-fab" onclick="toggleAiFab()" data-i18n-aria-label="aria.openAi" aria-label="Open NuroAI Assistant" class="ai-fab">
+        <span class="ai-fab-pulse"></span>
+        <span class="ai-fab-text">NuroAI</span>
+    </button>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-8 px-4 text-center text-xs mt-12" data-reveal="up">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-2 text-white font-bold">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                NuroTewedede Ethiopia
+            </div>
+            <p data-i18n="footer.tagline">© 2026 NuroTewedede Direct Sourcing Platform • Neighborhood Group Buying Network</p>
+        </div>
+    </footer>
+
+    <!-- Back to top -->
+    <button id="back-to-top" class="back-to-top" data-i18n-aria-label="aria.backToTop" aria-label="Back to top">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>
+    </button>
+
+    <!-- JavaScript Link -->
+    <script src="script.js" defer></script>
+</body>
+</html>

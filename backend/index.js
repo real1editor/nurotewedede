@@ -26,13 +26,16 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Middleware
-// CORS: lock the allowed origin(s) in production via FRONTEND_ORIGIN
-// (comma-separated). Local dev keeps the permissive `origin: true` so the
-// Live-Server / localhost:5000 workflows keep working.
-const allowedOrigins = String(process.env.FRONTEND_ORIGIN || '')
-  .split(',')
-  .map((s) => s.trim())
-  .filter(Boolean);
+// CORS: always allow the live Vercel frontend, plus any extra origins listed
+// in FRONTEND_ORIGIN (comma-separated). Local dev keeps the permissive
+// `origin: true` so the Live-Server / localhost:5000 workflows keep working.
+const allowedOrigins = Array.from(new Set([
+  'https://nurotewedede.vercel.app',
+  ...String(process.env.FRONTEND_ORIGIN || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+]));
 app.use(cors({
   origin: IS_PROD
     ? function (origin, cb) {
@@ -1208,19 +1211,24 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ error: IS_PROD ? 'Internal server error' : (err.message || 'Internal server error') });
 });
 
-// Start Server
-const server = app.listen(PORT, () => {
-  console.log(`NuroTewedede backend running on http://localhost:${PORT} (${IS_PROD ? 'production' : 'development'})`);
-});
+// Start the server locally; Vercel imports the app as a serverless function.
+if (require.main === module) {
+  const server = app.listen(PORT, () => {
+    console.log(`NuroTewedede backend running on http://localhost:${PORT} (${IS_PROD ? 'production' : 'development'})`);
+  });
 
-// Graceful shutdown + crash logging
-const shutdown = () => {
-  console.log('Shutting down gracefully...');
-  server.close(() => process.exit(0));
-  setTimeout(() => process.exit(0), 5000).unref();
-};
-process.on('SIGTERM', shutdown);
-process.on('SIGINT', shutdown);
+  // Graceful shutdown
+  const shutdown = () => {
+    console.log('Shutting down gracefully...');
+    server.close(() => process.exit(0));
+    setTimeout(() => process.exit(0), 5000).unref();
+  };
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
+}
+
 process.on('unhandledRejection', (reason) => {
   console.error('Unhandled rejection:', reason);
 });
+
+module.exports = app;

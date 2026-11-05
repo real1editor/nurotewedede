@@ -5839,3 +5839,4 @@ window.setProduce = setProduce;
 window.setCategoryGroup = setCategoryGroup;
 
 init();
+\nwindow.NuroElite={v:1,brand:" NuroTewedede Pro Elite Smart Brand};\n

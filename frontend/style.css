@@ -1753,3 +1753,6 @@ button:disabled {
     outline-offset: 2px;
     border-radius: 4px;
 }
+/* NuroTewedede Elite Pro Enhancements */
+.nuro-pro-glow{box-shadow:0 0 0 1px rgba(16,185,129,.25),0 20px 60px -30px rgba(16,185,129,.9);}
+.nuro-pro-badge{background:linear-gradient(90deg,#22d3ee,#10b981);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:900;}

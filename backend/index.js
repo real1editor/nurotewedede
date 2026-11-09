@@ -15,9 +15,24 @@ const IS_PROD = process.env.NODE_ENV === 'production';
 if (IS_PROD) app.set('trust proxy', 1);
 
 // Initialize Supabase Client
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY;
+// Normalize env values: dashboard pastes often include surrounding quotes,
+// whitespace or a trailing slash, which makes undici throw "fetch failed".
+function normalizeEnvValue(value) {
+  if (value == null) return '';
+  return String(value).trim().replace(/^['"]+|['"]+$/g, '').trim();
+}
+function normalizeEnvUrl(value) {
+  return normalizeEnvValue(value).replace(/\/+$/, '');
+}
+
+const supabaseUrl = normalizeEnvUrl(process.env.SUPABASE_URL);
+const supabaseKey = normalizeEnvValue(process.env.SUPABASE_ANON_KEY);
 const supabaseConfigured = Boolean(supabaseUrl && supabaseKey);
+
+function safeHost(value) {
+  try { return new URL(value).host; } catch (_) { return null; }
+}
+const supabaseHost = safeHost(supabaseUrl);
 
 if (!supabaseConfigured) {
   // Never process.exit() here: on a serverless platform that turns every
@@ -376,7 +391,9 @@ app.get('/api/health', async (req, res) => {
       supabaseUrl: Boolean(supabaseUrl),
       supabaseAnonKey: Boolean(supabaseKey),
       geminiApiKey: Boolean(process.env.GEMINI_API_KEY)
-    }
+    },
+    supabaseHost: supabaseHost,
+    supabaseUrlValid: Boolean(supabaseHost)
   };
 
   if (!supabase) {
@@ -393,6 +410,7 @@ app.get('/api/health', async (req, res) => {
         status: 'degraded',
         db: 'unavailable',
         dbError: error.message,
+        dbErrorCause: error.cause ? (error.cause.code || error.cause.message) : undefined,
         poolsCount: 0,
         latencyMs: Date.now() - started
       });
@@ -404,6 +422,7 @@ app.get('/api/health', async (req, res) => {
       status: 'degraded',
       db: 'unavailable',
       dbError: err.message,
+      dbErrorCause: err.cause ? (err.cause.code || err.cause.message) : undefined,
       poolsCount: 0,
       latencyMs: Date.now() - started
     });

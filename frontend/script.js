@@ -1929,7 +1929,7 @@ function api(path, options = {}) {
         if (origin !== 'http://localhost:5000') bases.unshift(origin);
     }
 
-    const TIMEOUT_MS = options.timeout || 18000;
+    const TIMEOUT_MS = options.timeout || 25000;
     const RETRIES = options.retries != null ? options.retries : 1;
     const useAbort = typeof AbortController !== 'undefined';
     // Per-call retry budget (the old version stored this on the function itself,

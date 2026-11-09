@@ -57,6 +57,24 @@ if (keyProjectRef && configuredRef && configuredRef !== keyProjectRef) {
   supabaseUrlCorrected = true;
 }
 
+// TEMPORARY MIGRATION SHIM: the production env var was pasted with a single
+// extra "n" (fhctkuauothkxNcn...), which does not resolve. Repair that exact
+// typo so the deployment can reach the real project. Remove this map once the
+// SUPABASE_URL value in the Vercel dashboard is corrected.
+const LEGACY_SUPABASE_HOST_FIXES = {
+  'fhctkuauothkxncnephnm.supabase.co': 'fhctkuauothkxcnephnm.supabase.co'
+};
+if (!supabaseUrlCorrected && configuredHost && LEGACY_SUPABASE_HOST_FIXES[configuredHost]) {
+  const fixedHost = LEGACY_SUPABASE_HOST_FIXES[configuredHost];
+  console.error(`SUPABASE_URL host "${configuredHost}" is invalid; using "${fixedHost}" instead. Please correct the environment variable.`);
+  supabaseUrl = 'https://' + fixedHost;
+  supabaseUrlCorrected = true;
+}
+
+const supabaseKeyType = keyProjectRef
+  ? 'jwt'
+  : (String(supabaseKey).startsWith('sb_publishable_') ? 'publishable' : 'unknown');
+
 const supabaseConfigured = Boolean(supabaseUrl && supabaseKey);
 const supabaseHost = safeHost(supabaseUrl);
 
@@ -420,7 +438,8 @@ app.get('/api/health', async (req, res) => {
     },
     supabaseHost: supabaseHost,
     supabaseUrlValid: Boolean(supabaseHost),
-    supabaseUrlCorrected: supabaseUrlCorrected
+    supabaseUrlCorrected: supabaseUrlCorrected,
+    supabaseKeyType: supabaseKeyType
   };
 
   if (!supabase) {

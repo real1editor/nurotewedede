@@ -25,13 +25,39 @@ function normalizeEnvUrl(value) {
   return normalizeEnvValue(value).replace(/\/+$/, '');
 }
 
-const supabaseUrl = normalizeEnvUrl(process.env.SUPABASE_URL);
 const supabaseKey = normalizeEnvValue(process.env.SUPABASE_ANON_KEY);
-const supabaseConfigured = Boolean(supabaseUrl && supabaseKey);
+let supabaseUrl = normalizeEnvUrl(process.env.SUPABASE_URL);
 
 function safeHost(value) {
   try { return new URL(value).host; } catch (_) { return null; }
 }
+
+// A Supabase anon key is a JWT whose "ref" claim is the project reference —
+// the same value used as the project URL subdomain. If SUPABASE_URL was pasted
+// with a typo or points at the wrong project, repair it from the key so a
+// single wrong character cannot take the whole database connection offline.
+function projectRefFromKey(key) {
+  try {
+    const parts = String(key).split('.');
+    if (parts.length !== 3) return null; // newer sb_publishable_ keys are not JWTs
+    const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padded = b64 + '='.repeat((4 - (b64.length % 4)) % 4);
+    const payload = JSON.parse(Buffer.from(padded, 'base64').toString('utf8'));
+    return typeof payload.ref === 'string' ? payload.ref : null;
+  } catch (_) { return null; }
+}
+
+const keyProjectRef = projectRefFromKey(supabaseKey);
+const configuredHost = safeHost(supabaseUrl);
+const configuredRef = configuredHost ? configuredHost.split('.')[0] : '';
+let supabaseUrlCorrected = false;
+if (keyProjectRef && configuredRef && configuredRef !== keyProjectRef) {
+  console.error(`SUPABASE_URL host "${configuredRef}" does not match the anon key project "${keyProjectRef}". Using https://${keyProjectRef}.supabase.co instead.`);
+  supabaseUrl = `https://${keyProjectRef}.supabase.co`;
+  supabaseUrlCorrected = true;
+}
+
+const supabaseConfigured = Boolean(supabaseUrl && supabaseKey);
 const supabaseHost = safeHost(supabaseUrl);
 
 if (!supabaseConfigured) {
@@ -393,7 +419,8 @@ app.get('/api/health', async (req, res) => {
       geminiApiKey: Boolean(process.env.GEMINI_API_KEY)
     },
     supabaseHost: supabaseHost,
-    supabaseUrlValid: Boolean(supabaseHost)
+    supabaseUrlValid: Boolean(supabaseHost),
+    supabaseUrlCorrected: supabaseUrlCorrected
   };
 
   if (!supabase) {

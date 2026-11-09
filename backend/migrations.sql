@@ -189,3 +189,23 @@ CREATE POLICY "products_delete_owner" ON public.products
 CREATE INDEX IF NOT EXISTS products_seller_id_idx ON public.products (seller_id);
 CREATE INDEX IF NOT EXISTS products_crop_type_idx ON public.products (crop_type);
 CREATE INDEX IF NOT EXISTS products_status_idx ON public.products (status);
+
+-- ============================================================
+-- 8) AUTH HELPER FUNCTIONS (used by the Express server)
+-- SECURITY DEFINER so username lookups keep working even when the
+-- profiles SELECT policy is restricted to the owning user.
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.username_available(uname TEXT)
+RETURNS BOOLEAN AS $$
+  SELECT NOT EXISTS (
+    SELECT 1 FROM public.profiles WHERE lower(username) = lower(uname)
+  );
+$$ LANGUAGE sql SECURITY DEFINER SET search_path = public;
+
+CREATE OR REPLACE FUNCTION public.email_for_username(uname TEXT)
+RETURNS TEXT AS $$
+  SELECT email FROM public.profiles WHERE lower(username) = lower(uname) LIMIT 1;
+$$ LANGUAGE sql SECURITY DEFINER SET search_path = public;
+
+GRANT EXECUTE ON FUNCTION public.username_available(TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.email_for_username(TEXT) TO anon, authenticated;

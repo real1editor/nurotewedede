@@ -17,13 +17,43 @@ if (IS_PROD) app.set('trust proxy', 1);
 // Initialize Supabase Client
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
+const supabaseConfigured = Boolean(supabaseUrl && supabaseKey);
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error("Missing SUPABASE_URL or SUPABASE_ANON_KEY in environment variables.");
-  process.exit(1);
+if (!supabaseConfigured) {
+  // Never process.exit() here: on a serverless platform that turns every
+  // request into an opaque 500. The /api guard below returns an actionable
+  // 503 instead, while /api/health stays reachable for diagnostics.
+  console.error('Missing SUPABASE_URL or SUPABASE_ANON_KEY in environment variables.');
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Every Supabase call must fail fast. Without a timeout, a paused or
+// unreachable Supabase project makes serverless requests hang until the
+// platform kills the function (the symptom users see as "connection failed").
+const SUPABASE_TIMEOUT_MS = Number(process.env.SUPABASE_TIMEOUT_MS) || 15000;
+
+function fetchWithTimeout(input, init) {
+  init = init || {};
+  if (typeof AbortController === 'undefined') return fetch(input, init);
+  const controller = new AbortController();
+  const upstream = init.signal;
+  const timer = setTimeout(function () { controller.abort(); }, SUPABASE_TIMEOUT_MS);
+  if (upstream) {
+    if (upstream.aborted) controller.abort();
+    else upstream.addEventListener('abort', function () { controller.abort(); }, { once: true });
+  }
+  return fetch(input, Object.assign({}, init, { signal: controller.signal }))
+    .finally(function () { clearTimeout(timer); });
+}
+
+const SUPABASE_OPTS = {
+  // The backend is stateless: sessions live in httpOnly cookies, never here.
+  auth: { persistSession: false, autoRefreshToken: false },
+  global: { fetch: fetchWithTimeout }
+};
+
+const supabase = supabaseConfigured
+  ? createClient(supabaseUrl, supabaseKey, SUPABASE_OPTS)
+  : null;
 
 // Middleware
 // CORS: always allow the live Vercel frontend, plus any extra origins listed
@@ -31,6 +61,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 // `origin: true` so the Live-Server / localhost:5000 workflows keep working.
 const allowedOrigins = Array.from(new Set([
   'https://nurotewedede.vercel.app',
+  'https://www.nurotewedede.vercel.app',
   ...String(process.env.FRONTEND_ORIGIN || '')
     .split(',')
     .map((s) => s.trim())
@@ -41,18 +72,34 @@ app.use(cors({
     ? function (origin, cb) {
         if (!origin) return cb(null, true); // same-origin / curl requests
         if (allowedOrigins.includes(origin)) return cb(null, true);
+        // Allow only this project's own Vercel preview deployments.
+        try {
+          const host = new URL(origin).hostname;
+          if (/^nurotewedede[a-z0-9-]*\.vercel\.app$/i.test(host)) {
+            return cb(null, true);
+          }
+        } catch (_) { /* malformed Origin header: fall through to reject */ }
         return cb(new Error('Origin not allowed by CORS'));
       }
     : true,
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  optionsSuccessStatus: 204,
+  maxAge: 86400
 }));
 // Security headers. CSP is disabled because the frontend uses inline onclick handlers.
-// The remaining headers (HSTS, X-Frame-Options, X-Content-Type-Options, etc.) still apply.
-app.use(helmet({ contentSecurityPolicy: false }));
+// CORP is cross-origin so the API responses can be consumed by the Vercel frontend.
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  crossOriginEmbedderPolicy: false
+}));
 // Serve the frontend site from the sibling 'frontend' folder
 const FRONTEND_DIR = path.join(__dirname, '..', 'frontend');
 app.use(express.static(FRONTEND_DIR));
-app.use(express.json());
+// Photos can be submitted as data URLs, so allow a larger JSON body.
+app.use(express.json({ limit: '8mb' }));
 app.use(cookieParser());
 
 // Redirect plain-HTTP traffic to HTTPS in production.
@@ -94,6 +141,15 @@ const aiLimiter = rateLimit({
 app.use('/api/auth', authLimiter);
 app.use('/api/ai-assistant', aiLimiter);
 
+// If Supabase credentials are missing, fail with a clear, actionable error
+// instead of crashing the whole function. /api/health stays available.
+app.use('/api', (req, res, next) => {
+  if (supabaseConfigured || req.path === '/health') return next();
+  return res.status(503).json({
+    error: 'Backend is not configured: add SUPABASE_URL and SUPABASE_ANON_KEY to the deployment environment, then redeploy.'
+  });
+});
+
 // ---------- Session helpers ----------
 // Supabase access tokens expire after ~1 hour, so storing only the access
 // token in a 7-day cookie guarantees "Authentication required" errors later.
@@ -116,6 +172,19 @@ function setSessionCookies(res, session) {
   }
 }
 
+// clearCookie must repeat the same path/sameSite/secure attributes, otherwise
+// browsers refuse to overwrite a cross-site SameSite=None cookie.
+function clearSessionCookies(res) {
+  const opts = {
+    httpOnly: SESSION_COOKIE_OPTS.httpOnly,
+    secure: SESSION_COOKIE_OPTS.secure,
+    sameSite: SESSION_COOKIE_OPTS.sameSite,
+    path: '/'
+  };
+  res.clearCookie('sb-access-token', opts);
+  res.clearCookie('sb-refresh-token', opts);
+}
+
 // Resolve the current user from cookies/headers, refreshing an expired access
 // token via the refresh-token cookie when possible. Returns { user, token },
 // or null after clearing dead cookies so stale state never lingers.
@@ -136,8 +205,7 @@ async function resolveUser(req, res) {
     }
   }
 
-  res.clearCookie('sb-access-token');
-  res.clearCookie('sb-refresh-token');
+  clearSessionCookies(res);
   return null;
 }
 
@@ -153,8 +221,10 @@ async function requireAuth(req, res, next) {
     req.user = user;
     req.authToken = resolved.token; // post-refresh token, for authedSupabase()
     // Attach the public profile (name/username/role) if one exists.
+    // Use the user-bound client so the RLS "own profile" policy applies.
     try {
-      const { data: profile } = await supabase
+      const db = supabaseForToken(resolved.token);
+      const { data: profile } = await db
         .from('profiles')
         .select('name, username, role')
         .eq('id', user.id)
@@ -180,15 +250,25 @@ function requireSeller(req, res, next) {
   next();
 }
 
-// Create a Supabase client bound to the request's user session, so RLS
-// policies see auth.uid() = the signed-in user (the shared anon client
-// cannot pass RLS checks that depend on the user's identity).
+// Create a Supabase client bound to a user's access token, so RLS policies
+// see auth.uid() = the signed-in user. The shared anon client cannot pass RLS
+// checks that depend on the user's identity.
+function supabaseForToken(token) {
+  return createClient(supabaseUrl, supabaseKey, {
+    ...SUPABASE_OPTS,
+    global: {
+      ...SUPABASE_OPTS.global,
+      headers: { Authorization: 'Bearer ' + token }
+    }
+  });
+}
+
+// Request-scoped authenticated client (requires requireAuth to have run, or a
+// valid access token in the cookie/Authorization header).
 function authedSupabase(req) {
   const token = req.authToken || req.cookies['sb-access-token'] || req.headers.authorization?.split(' ')[1];
   if (!token) return null;
-  return createClient(supabaseUrl, supabaseKey, {
-    global: { headers: { Authorization: 'Bearer ' + token } }
-  });
+  return supabaseForToken(token);
 }
 
 function likesNotEnabled(res) {
@@ -214,15 +294,26 @@ app.post('/api/auth/signup', async (req, res) => {
   }
 
   // Usernames must be unique — check before creating the auth user.
-  const { data: existingProfile, error: lookupError } = await supabase
-    .from('profiles')
-    .select('username')
-    .eq('username', normalizedUsername)
-    .maybeSingle();
-  if (lookupError && !/does not exist|could not find|schema cache/i.test(lookupError.message)) {
-    return res.status(500).json({ error: lookupError.message });
+  // Prefer the SECURITY DEFINER helper so this works even when profiles SELECT
+  // is locked down to the owning user.
+  let usernameTaken = false;
+  const { data: available, error: rpcError } = await supabase
+    .rpc('username_available', { uname: normalizedUsername });
+  if (!rpcError) {
+    usernameTaken = available === false;
+  } else {
+    // Fallback for databases where the helper function isn't installed yet.
+    const { data: existingProfile, error: lookupError } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('username', normalizedUsername)
+      .maybeSingle();
+    if (lookupError && !/does not exist|could not find|schema cache/i.test(lookupError.message)) {
+      return res.status(500).json({ error: lookupError.message });
+    }
+    usernameTaken = !!existingProfile;
   }
-  if (existingProfile) {
+  if (usernameTaken) {
     return res.status(400).json({ error: 'That username is already taken.' });
   }
 
@@ -237,9 +328,11 @@ app.post('/api/auth/signup', async (req, res) => {
   if (error) return res.status(400).json({ error: error.message });
 
   // Profile row is created automatically by the handle_new_user() trigger.
-  // If the trigger isn't installed yet, create it here as a fallback.
-  if (data.user) {
-    const { error: profileError } = await supabase
+  // If the trigger isn't installed yet, create it here as a fallback. The
+  // insert must run as the new user so the "insert own profile" RLS policy passes.
+  if (data.user && data.session && data.session.access_token) {
+    const db = supabaseForToken(data.session.access_token);
+    const { error: profileError } = await db
       .from('profiles')
       .upsert([{
         id: data.user.id,
@@ -274,12 +367,46 @@ app.get('/', (req, res) => {
 
 // Health check
 app.get('/api/health', async (req, res) => {
+  const started = Date.now();
+  // Never leak secret values — only whether each binding is present.
+  const base = {
+    status: 'ok',
+    env: IS_PROD ? 'production' : 'development',
+    configured: {
+      supabaseUrl: Boolean(supabaseUrl),
+      supabaseAnonKey: Boolean(supabaseKey),
+      geminiApiKey: Boolean(process.env.GEMINI_API_KEY)
+    }
+  };
+
+  if (!supabase) {
+    return res.json({ ...base, db: 'not_configured', poolsCount: 0 });
+  }
+
   try {
-    const { count, error } = await supabase.from('pools').select('id', { count: 'exact', head: true });
-    if (error) return res.json({ status: 'ok', poolsCount: 0, db: 'unavailable' });
-    res.json({ status: 'ok', poolsCount: count, db: 'connected' });
+    const { count, error } = await supabase
+      .from('pools')
+      .select('id', { count: 'exact', head: true });
+    if (error) {
+      return res.json({
+        ...base,
+        status: 'degraded',
+        db: 'unavailable',
+        dbError: error.message,
+        poolsCount: 0,
+        latencyMs: Date.now() - started
+      });
+    }
+    res.json({ ...base, db: 'connected', poolsCount: count, latencyMs: Date.now() - started });
   } catch (err) {
-    res.json({ status: 'ok', poolsCount: 0, db: 'unavailable' });
+    res.json({
+      ...base,
+      status: 'degraded',
+      db: 'unavailable',
+      dbError: err.message,
+      poolsCount: 0,
+      latencyMs: Date.now() - started
+    });
   }
 });
 
@@ -294,18 +421,30 @@ app.post('/api/auth/login', async (req, res) => {
   let loginEmail = identifier.toLowerCase();
   if (!identifier.includes('@')) {
     // Treat the identifier as a username and resolve it to the account's email.
-    const { data: profile, error: lookupError } = await supabase
-      .from('profiles')
-      .select('email')
-      .eq('username', identifier.toLowerCase().replace(/^@/, ''))
-      .maybeSingle();
-    if (lookupError && !/does not exist|could not find|schema cache/i.test(lookupError.message)) {
-      return res.status(500).json({ error: lookupError.message });
+    // Use the SECURITY DEFINER helper so profiles can stay locked down.
+    const normalizedUsername = identifier.toLowerCase().replace(/^@/, '');
+    const { data: resolvedEmail, error: rpcError } = await supabase
+      .rpc('email_for_username', { uname: normalizedUsername });
+    if (!rpcError) {
+      if (!resolvedEmail) {
+        return res.status(400).json({ error: 'No account found with that username.' });
+      }
+      loginEmail = resolvedEmail;
+    } else {
+      // Fallback for databases where the helper function isn't installed yet.
+      const { data: profile, error: lookupError } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('username', normalizedUsername)
+        .maybeSingle();
+      if (lookupError && !/does not exist|could not find|schema cache/i.test(lookupError.message)) {
+        return res.status(500).json({ error: lookupError.message });
+      }
+      if (!profile) {
+        return res.status(400).json({ error: 'No account found with that username.' });
+      }
+      loginEmail = profile.email;
     }
-    if (!profile) {
-      return res.status(400).json({ error: 'No account found with that username.' });
-    }
-    loginEmail = profile.email;
   }
 
   const { data, error } = await supabase.auth.signInWithPassword({ email: loginEmail, password });
@@ -315,7 +454,8 @@ app.post('/api/auth/login', async (req, res) => {
   // Attach the public profile (name/username/role) to the returned user.
   let profile = null;
   if (data.user) {
-    const { data: prof } = await supabase
+    const db = data.session ? supabaseForToken(data.session.access_token) : supabase;
+    const { data: prof } = await db
       .from('profiles')
       .select('name, username, role')
       .eq('id', data.user.id)
@@ -343,7 +483,8 @@ app.get('/api/auth/me', async (req, res) => {
     const user = resolved.user;
 
     let profile = null;
-    const { data: prof } = await supabase
+    const db = supabaseForToken(resolved.token);
+    const { data: prof } = await db
       .from('profiles')
       .select('name, username, role')
       .eq('id', user.id)
@@ -361,8 +502,7 @@ app.post('/api/auth/logout', (req, res) => {
   // Clearing both cookies is what ends the session client-side. Server-side
   // revocation would require the service-role key, which we deliberately
   // don't hold on this server.
-  res.clearCookie('sb-access-token');
-  res.clearCookie('sb-refresh-token');
+  clearSessionCookies(res);
   res.json({ message: 'Signed out successfully' });
 });
 
@@ -412,7 +552,8 @@ app.get('/api/products', async (req, res) => {
 
 // Get the signed-in seller's own listings (any status).
 app.get('/api/products/mine', requireAuth, requireSeller, async (req, res) => {
-  const { data, error } = await supabase
+  const db = authedSupabase(req);
+  const { data, error } = await db
     .from('products')
     .select('*')
     .eq('seller_id', req.user.id)
@@ -488,7 +629,12 @@ app.post('/api/products', requireAuth, requireSeller, async (req, res) => {
     status: 'active'
   };
 
-  const { data, error } = await supabase
+  // RLS policy "products_insert_auth" requires auth.uid() to be present, so the
+  // insert must run with the seller's access token (not the shared anon client).
+  const db = authedSupabase(req);
+  if (!db) return res.status(401).json({ error: 'Authentication required. Please sign in.' });
+
+  const { data, error } = await db
     .from('products')
     .insert([insertPayload])
     .select()
@@ -506,7 +652,10 @@ app.post('/api/products', requireAuth, requireSeller, async (req, res) => {
 
 // Update a Listing — seller owns it.
 app.put('/api/products/:id', requireAuth, requireSeller, async (req, res) => {
-  const { data: existing, error: fetchError } = await supabase
+  const db = authedSupabase(req);
+  if (!db) return res.status(401).json({ error: 'Authentication required. Please sign in.' });
+
+  const { data: existing, error: fetchError } = await db
     .from('products')
     .select('seller_id')
     .eq('id', Number(req.params.id))
@@ -548,7 +697,7 @@ app.put('/api/products/:id', requireAuth, requireSeller, async (req, res) => {
     }
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('products')
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', Number(req.params.id))
@@ -561,7 +710,10 @@ app.put('/api/products/:id', requireAuth, requireSeller, async (req, res) => {
 
 // Delete a Listing — seller owns it.
 app.delete('/api/products/:id', requireAuth, requireSeller, async (req, res) => {
-  const { data: existing, error: fetchError } = await supabase
+  const db = authedSupabase(req);
+  if (!db) return res.status(401).json({ error: 'Authentication required. Please sign in.' });
+
+  const { data: existing, error: fetchError } = await db
     .from('products')
     .select('seller_id')
     .eq('id', Number(req.params.id))
@@ -572,7 +724,7 @@ app.delete('/api/products/:id', requireAuth, requireSeller, async (req, res) => 
     return res.status(403).json({ error: 'You can only delete your own listings.' });
   }
 
-  const { error } = await supabase
+  const { error } = await db
     .from('products')
     .delete()
     .eq('id', Number(req.params.id));
@@ -641,7 +793,10 @@ app.post('/api/pools', requireAuth, async (req, res) => {
     image_url: ''
   };
 
-  let { data, error } = await supabase
+  const db = authedSupabase(req);
+  if (!db) return res.status(401).json({ error: 'Authentication required. Please sign in.' });
+
+  let { data, error } = await db
     .from('pools')
     .insert([insertPayload])
     .select()
@@ -653,7 +808,7 @@ app.post('/api/pools', requireAuth, async (req, res) => {
       title, town, price: priceNum, retail_price: retailPriceNum,
       target_shares: Number(targetShares), current_shares: 0, woreda
     };
-    const retry = await supabase.from('pools').insert([basePayload]).select().single();
+    const retry = await db.from('pools').insert([basePayload]).select().single();
     if (retry.error) return res.status(500).json({ error: retry.error.message });
     data = retry.data;
   }
@@ -665,6 +820,8 @@ app.post('/api/pools', requireAuth, async (req, res) => {
 app.post('/api/pools/:id/reserve', requireAuth, async (req, res) => {
   const poolId = req.params.id;
   const userId = req.user.id;
+  const db = authedSupabase(req);
+  if (!db) return res.status(401).json({ error: 'Authentication required. Please sign in.' });
   const shares = Math.max(1, Math.floor(Number(req.body.shares) || 1));
   const paymentMethod = ['telebirr', 'cbe', 'cash'].includes(req.body.paymentMethod)
     ? req.body.paymentMethod
@@ -694,7 +851,7 @@ app.post('/api/pools/:id/reserve', requireAuth, async (req, res) => {
   const voucherCode = 'NT-' + crypto.randomBytes(4).toString('hex').toUpperCase();
 
   // 2. Insert reservation record
-  const { error: reserveError } = await supabase
+  const { error: reserveError } = await db
     .from('reservations')
     .insert([{
       pool_id: poolId,
@@ -706,7 +863,7 @@ app.post('/api/pools/:id/reserve', requireAuth, async (req, res) => {
 
   if (reserveError) {
     // Migration not run yet: fall back to the minimal columns that exist in the base schema.
-    const retry = await supabase
+    const retry = await db
       .from('reservations')
       .insert([{ pool_id: poolId, user_id: userId }]);
     if (retry.error) return res.status(400).json({ error: 'Could not reserve share: ' + retry.error.message });
@@ -720,7 +877,7 @@ app.post('/api/pools/:id/reserve', requireAuth, async (req, res) => {
     updatePayload.status = 'locked';
   }
 
-  const { data: updatedPool, error: updateError } = await supabase
+  const { data: updatedPool, error: updateError } = await db
     .from('pools')
     .update(updatePayload)
     .eq('id', poolId)
@@ -862,13 +1019,16 @@ app.post('/api/pools/:id/comments', requireAuth, async (req, res) => {
   const poolId = req.params.id;
   const userName = req.user.username || req.user.name || (req.user.email || 'Neighbor Buyer').split('@')[0];
 
+  const db = authedSupabase(req);
+  if (!db) return res.status(401).json({ error: 'Authentication required. Please sign in.' });
+
   const { data: pool } = await supabase
     .from('pools')
     .select('town, comments_count')
     .eq('id', poolId)
     .single();
 
-  const { data: comment, error: commentError } = await supabase
+  const { data: comment, error: commentError } = await db
     .from('comments')
     .insert([{
       pool_id: poolId,
@@ -890,7 +1050,7 @@ app.post('/api/pools/:id/comments', requireAuth, async (req, res) => {
 
   // Bump the pool comment counter (only when the column exists)
   if (pool && pool.comments_count !== undefined) {
-    await supabase
+    await db
       .from('pools')
       .update({ comments_count: (pool.comments_count || 0) + 1 })
       .eq('id', poolId);

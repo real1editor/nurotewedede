@@ -1929,23 +1929,29 @@ function api(path, options = {}) {
         if (origin !== 'http://localhost:5000') bases.unshift(origin);
     }
 
-    const TIMEOUT_MS = options.timeout || 12000;
+    const TIMEOUT_MS = options.timeout || 18000;
     const RETRIES = options.retries != null ? options.retries : 1;
     const useAbort = typeof AbortController !== 'undefined';
+    // Per-call retry budget (the old version stored this on the function itself,
+    // so it was shared by every request and never reset).
+    let retriesLeft = RETRIES;
+
+    const fetchOptions = Object.assign({}, options);
+    delete fetchOptions.timeout;
+    delete fetchOptions.retries;
 
     function request(base) {
         // Per-request AbortController + timer: concurrent api() calls never share
         // (and accidentally cancel) each other's timeout.
         const controller = useAbort ? new AbortController() : null;
         const timer = controller ? setTimeout(function () { controller.abort(); }, TIMEOUT_MS) : null;
-        return fetch(base + path, {
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            signal: controller ? controller.signal : undefined,
-            ...options,
-        }).then(async (r) => {
+        const init = Object.assign({
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        }, fetchOptions);
+        // Never let a caller-supplied signal replace our timeout controller.
+        init.signal = controller ? controller.signal : fetchOptions.signal;
+        return fetch(base + path, init).then(async function (r) {
             clearTimeout(timer);
             let body = {};
             let jsonOk = true;
@@ -1961,24 +1967,28 @@ function api(path, options = {}) {
                 throw err;
             }
             return body;
+        }).catch(function (err) {
+            clearTimeout(timer);
+            throw err;
         });
     }
 
     function attempt(index) {
         return request(bases[index]).catch(function (err) {
-            const isNetwork = err instanceof TypeError || !err.serverReached;
             const isAbort = err && err.name === 'AbortError';
-            // Try the next base first, then retry the same base up to RETRIES times.
+            const isNetwork = err instanceof TypeError || err.serverUnreachable || isAbort;
+            const status = Number(err && err.status) || 0;
+            const isRetryable = isNetwork || status >= 500 || status === 429;
+            // Try the next configured base before burning a retry.
             if (index < bases.length - 1) return attempt(index + 1);
-            const retryIdx = (attempt._retries = (attempt._retries || 0) + 1);
-            if (retryIdx <= RETRIES && !isAbort) {
+            if (retriesLeft > 0 && isRetryable) {
+                const wait = 600 * (RETRIES - retriesLeft + 1);
+                retriesLeft -= 1;
                 return new Promise(function (resolve) {
-                    setTimeout(function () {
-                        resolve(attempt(index));
-                    }, 600 * retryIdx);
+                    setTimeout(function () { resolve(attempt(index)); }, wait);
                 });
             }
-            if (isNetwork || isAbort) {
+            if (isNetwork) {
                 const netErr = new Error(isAbort ? t('err.serverTimeout') : t('err.serverUnreachable'));
                 netErr.serverUnreachable = true;
                 throw netErr;
@@ -5438,6 +5448,10 @@ function init() {
     const savedRole = localStorage.getItem('nt-role');
     showTab(!savedRole ? 'gate' : (savedRole === 'seller' ? 'seller' : 'pools'), true);
 
+    // Load public listings immediately instead of waiting for the auth round-trip.
+    // A slow /api/auth/me used to leave the first view blank for the full timeout.
+    fetchPools();
+
     const mobileToggle = document.getElementById('mobile-menu-toggle');
     if (mobileToggle) mobileToggle.addEventListener('click', toggleMobileMenu);
 
@@ -5651,7 +5665,8 @@ function init() {
         .then(function () {
             authReady = true;
             updateAuthUI();
-            fetchPools();
+            // Only retry if the early fetch failed; otherwise keep the data we already have.
+            if (poolsError) fetchPools();
             if (currentUser && currentRole === 'seller') fetchMarketplace();
             if (currentUser) {
                 // Signed in: route to the portal that matches the SERVER-authoritative

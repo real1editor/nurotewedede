@@ -1,6 +1,6 @@
 // NuroTewedede Service Worker - simple app-shell cache for offline use.
 // Bump CACHE below (and re-register) whenever app shell assets change to avoid stale caches.
-const CACHE = 'nurotewedede-v5';
+const CACHE = 'nurotewedede-v6';
 const ASSETS = [
   './',
   './index.html',
@@ -39,19 +39,25 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
-  const isApiGet = event.request.method === 'GET' && url.pathname.startsWith('/api/');
   const isSameOrigin = url.origin === self.location.origin;
 
   if (!isSameOrigin) {
+    // Cross-origin API calls (the configured backend) must never be intercepted.
     return;
   }
 
-  if (isApiGet) {
+  // Only cache the public, read-only listing endpoints. Never cache auth or
+  // per-user routes (e.g. /api/products/mine, /api/auth/me) so a shared device
+  // can't serve another session's data from the cache.
+  const isCacheableApi = event.request.method === 'GET' &&
+    (url.pathname === '/api/pools' || url.pathname === '/api/products');
+
+  if (isCacheableApi) {
     event.respondWith(
       caches.open(API_CACHE).then((cache) => {
         return cache.match(event.request).then((cached) => {
           const fetchPromise = fetch(event.request).then((response) => {
-            if (response.ok) {
+            if (response.ok && response.type === 'basic') {
               cache.put(event.request, response.clone());
             }
             return response;
@@ -63,7 +69,8 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (event.request.method !== 'GET') {
+  // Never cache non-GET traffic (including every /api mutation).
+  if (event.request.method !== 'GET' || url.pathname.startsWith('/api/')) {
     return;
   }
 

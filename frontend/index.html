@@ -16,8 +16,11 @@
     <meta name="theme-color" content="#047857">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://nurotewedede-backend.vercel.app https://*.vercel.app; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self';">
     <link rel="apple-touch-icon" href="logo.jpeg">
+    <!-- Warm up the cross-origin API connection before the first fetch. -->
+    <link rel="preconnect" href="https://nurotewedede-backend.vercel.app" crossorigin>
+    <link rel="dns-prefetch" href="https://nurotewedede-backend.vercel.app">
     <!-- Precompiled Tailwind CSS (built via `npm run build:css`; no runtime CDN dependency) -->
     <link rel="stylesheet" href="tailwind.css">
     <link rel="stylesheet" href="style.css">
